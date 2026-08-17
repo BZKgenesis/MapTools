@@ -1,0 +1,15 @@
+{
+  "itemGroup.maptools": "Map Tools Tab",
+  "item.maptools.redstone_receiver_editor": "Redstone Receiver Editor",
+  "item.maptools.entity_detector_editor": "Redstone Receiver Editor",
+  "entity.maptools.redstone_receiver": "Redstone Receiver",
+  "entity.maptools.entity_detector": "Entity Detector",
+
+  "maptools.configuration.title": "Map tools Configs",
+  "maptools.configuration.section.maptools.common.toml": "Map tools Configs",
+  "maptools.configuration.section.maptools.common.toml.title": "Map tools Configs",
+  "maptools.configuration.items": "Item List",
+  "maptools.configuration.logDirtBlock": "Log Dirt Block",
+  "maptools.configuration.magicNumberIntroduction": "Magic Number Text",
+  "maptools.configuration.magicNumber": "Magic Number"
+}

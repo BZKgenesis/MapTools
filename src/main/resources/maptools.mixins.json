@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "net.bzkgns.maptools.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "CommandSuggestionsMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  },
+  "client": [
+    "CommandSuggestionsAccessor"
+  ]
+}
