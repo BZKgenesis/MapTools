@@ -1,12 +1,17 @@
 package net.bzkgns.maptools.entities.entity_detector;
 
+import net.bzkgns.maptools.Config;
 import net.bzkgns.maptools.Maptools;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -20,12 +25,13 @@ import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 
 import java.util.*;
 
-public class EntityDetector extends Entity {
+public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
 
     private static final EntityDataAccessor<Boolean> ENABLED =
             SynchedEntityData.defineId(EntityDetector.class, EntityDataSerializers.BOOLEAN);
@@ -36,9 +42,9 @@ public class EntityDetector extends Entity {
 
     private final List<EntityDetectorCommand> commands = new ArrayList<>();
 
-    private static final float DEFAULT_SIZE_X = 3.0f;
+    private static final float DEFAULT_SIZE_X = 1.0f;
     private static final float DEFAULT_SIZE_Y = 1.0f;
-    private static final float DEFAULT_SIZE_Z = 2.0f;
+    private static final float DEFAULT_SIZE_Z = 1.0f;
 
     private final Vector3f size = new Vector3f(DEFAULT_SIZE_X, DEFAULT_SIZE_Y, DEFAULT_SIZE_Z);
 
@@ -192,8 +198,8 @@ public class EntityDetector extends Entity {
     private AABB computeDetectionBox() {
         Vec3 pos = this.position();
         return new AABB(
-                pos.x - size.x / 2, pos.y - size.y / 2, pos.z - size.z / 2,
-                pos.x + size.x / 2, pos.y + size.y / 2, pos.z + size.z / 2
+                pos.x - size.x / 2, pos.y - size.y / 2 + .5f, pos.z - size.z / 2,
+                pos.x + size.x / 2, pos.y + size.y / 2 + .5f, pos.z + size.z / 2
         );
     }
 
@@ -263,7 +269,7 @@ public class EntityDetector extends Entity {
             server.getCommands().performCommand(parseResults, command);
         } catch (Exception e) {
 
-            Maptools.LOGGER.error("[EntityDetector] Erreur exécution commande '{}': {}", command, e.getMessage());
+            Maptools.LOGGER.error("[EntityDetector] Error executing command '{}': {}", command, e.getMessage());
         }
     }
 
@@ -300,7 +306,22 @@ public class EntityDetector extends Entity {
     }
 
     @Override
-    public void kill() {}
+    public void kill() {
+        var server = this.level().getServer();
+        if (server == null) return;
+        if (!Config.SHOW_WARNING_MESSAGE_KILL.getAsBoolean()) return;
+        MutableComponent msg = Component.literal("You can't kill en MapTools entity with the ").withColor(0xFFFF0000)
+                        .append(Component.literal("/kill").withStyle(ChatFormatting.YELLOW,  ChatFormatting.UNDERLINE))
+                        .append(Component.literal(" command, you need to use the ")).withColor(0xFFFF0000)
+                        .append(Component.literal("/discard").withStyle(ChatFormatting.YELLOW,  ChatFormatting.UNDERLINE))
+                        .append(Component.literal(" command. You can disable this message in the config or by clicking "))
+                        .append(Component.literal("here.").withStyle( style -> style.withColor(ChatFormatting.WHITE)
+                                .applyFormat(ChatFormatting.UNDERLINE).withClickEvent(
+
+                                        new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/mt config showWarningKill false"))
+                        ));
+        server.getPlayerList().broadcastSystemMessage(msg, false);
+    }
 
     @Override
     public boolean isPickable() {return true;}
@@ -336,5 +357,21 @@ public class EntityDetector extends Entity {
         throw new IllegalStateException(
                 "EntityDetector cannot have passengers"
         );
+    }
+
+    @Override
+    public void writeSpawnData(RegistryFriendlyByteBuf buf) {
+        Vector3f size = this.getSize();
+        buf.writeFloat(size.x);
+        buf.writeFloat(size.y);
+        buf.writeFloat(size.z);
+    }
+
+    @Override
+    public void readSpawnData(RegistryFriendlyByteBuf buf) {
+        float sizeX = buf.readFloat();
+        float sizeY = buf.readFloat();
+        float sizeZ = buf.readFloat();
+        setSize(sizeX,sizeY,sizeZ);
     }
 }

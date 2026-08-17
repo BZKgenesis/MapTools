@@ -33,7 +33,7 @@ public class RedstoneReceiverInteractionHandler {
         if (receiver == null ) {return;}
         receiver.discard();
         event.getEntity().displayClientMessage(
-                Component.literal("Redstone Receiver supprimé.").withColor(Color.RED.getRGB()),
+                Component.literal("Redstone Receiver removed.").withColor(Color.RED.getRGB()),
                 true
         );
         event.setCanceled(true);
@@ -76,12 +76,6 @@ public class RedstoneReceiverInteractionHandler {
                             pos.getZ() + 0.5
                     );
                     level.addFreshEntity(newReceiver);
-                    event.getEntity().displayClientMessage(
-                            Component.literal(
-                                    "Redstone Receiver créé"
-                            ),
-                            true
-                    );
                 }
             }
         }

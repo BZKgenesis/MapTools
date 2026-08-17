@@ -60,7 +60,7 @@ public class RedstoneReceiverEditScreen extends Screen {
         this.addRenderableWidget(enabledCheckbox);
 
         this.xrayVisibleCheckbox = Checkbox.builder(
-                        Component.literal("Xray Visible"),
+                        Component.literal("Xray visibility"),
                         this.font
                 )
                 .pos(centerX + 105,
@@ -92,7 +92,7 @@ public class RedstoneReceiverEditScreen extends Screen {
 
 
         this.addRenderableWidget(
-                Button.builder(Component.literal("+ Ajouter une commande"),
+                Button.builder(Component.literal("+ Add a command"),
                                 button ->commandList.addCommand())
                         .bounds(
                             centerX -220,
@@ -104,7 +104,7 @@ public class RedstoneReceiverEditScreen extends Screen {
 
         this.addRenderableWidget(
                 Button.builder(
-                        Component.literal("Valider"),
+                        Component.literal("Validate"),
                         button -> save())
                     .bounds(
                         centerX - 100,

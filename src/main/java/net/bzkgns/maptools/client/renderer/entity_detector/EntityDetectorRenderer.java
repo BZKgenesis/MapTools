@@ -12,6 +12,8 @@ import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -54,10 +56,16 @@ public class EntityDetectorRenderer extends EntityRenderer<EntityDetector> {
         if (!minecraft.player.getMainHandItem().is(ModItems.ENTITY_DETECTOR_EDITOR.get())) return;
         BlockState blockState;
         EntityDetector target = getEntityLookingAt(EntityDetector.class, minecraft.player, 4.5f);
-        if (target != null && target.equals(entity)){
-            blockState = Blocks.GREEN_STAINED_GLASS.defaultBlockState();
+
+
+        if (entity.isEnabled()) {
+            if (target != null && target.equals(entity)) {
+                blockState = Blocks.GREEN_STAINED_GLASS.defaultBlockState();
+            } else {
+                blockState = Blocks.GRAY_STAINED_GLASS.defaultBlockState();
+            }
         }else{
-            blockState = Blocks.GRAY_STAINED_GLASS.defaultBlockState();
+            blockState = Blocks.RED_STAINED_GLASS.defaultBlockState();
         }
 
 
@@ -89,9 +97,21 @@ public class EntityDetectorRenderer extends EntityRenderer<EntityDetector> {
 
         poseStack.pushPose();
 
+        poseStack.translate(0D, .25D, 0D);
+
+        renderNameTag(
+                entity,
+                Component.empty().append(entity.getDisplayName()).withColor(0xFFFF5555),
+                poseStack,
+                buffer,
+                packedLight,
+                partialTick
+        );
+        poseStack.translate(0D, -.25D, 0D);
+
 
         Vector3f size = entity.getSize();
-        poseStack.translate(-size.x/2f, -size.y/2f, -size.z/2f);
+        poseStack.translate(-size.x/2f, -size.y/2f + 0.5f, -size.z/2f);
 
         poseStack.scale(size.x, size.y, size.z);
 
@@ -104,6 +124,8 @@ public class EntityDetectorRenderer extends EntityRenderer<EntityDetector> {
                 ModelData.EMPTY,
                 RenderType.TRANSLUCENT
             );
+
+
 
 
         poseStack.popPose();

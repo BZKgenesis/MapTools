@@ -2,6 +2,7 @@ package net.bzkgns.maptools;
 
 import net.bzkgns.maptools.client.datagen.ModItemModelProvider;
 import net.bzkgns.maptools.commands.DiscardCommand;
+import net.bzkgns.maptools.commands.ShowWarningKillConfigCommand;
 import net.bzkgns.maptools.entities.ModEntities;
 import net.bzkgns.maptools.entities.entity_detector.EntityDetectorInteractionHandler;
 import net.bzkgns.maptools.entities.redstone_receiver.RedstoneReceiverInteractionHandler;
@@ -81,14 +82,6 @@ public class Maptools {
     private void commonSetup(FMLCommonSetupEvent event) {
         // Some common setup code
         LOGGER.info("HELLO FROM COMMON SETUP");
-
-        if (Config.LOG_DIRT_BLOCK.getAsBoolean()) {
-            LOGGER.info("DIRT BLOCK >> {}", BuiltInRegistries.BLOCK.getKey(Blocks.DIRT));
-        }
-
-        LOGGER.info("{}{}", Config.MAGIC_NUMBER_INTRODUCTION.get(), Config.MAGIC_NUMBER.getAsInt());
-
-        Config.ITEM_STRINGS.get().forEach((item) -> LOGGER.info("ITEM >> {}", item));
     }
 
 
@@ -101,7 +94,9 @@ public class Maptools {
 
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
+
         DiscardCommand.register(event.getDispatcher());
+        ShowWarningKillConfigCommand.register(event.getDispatcher());
     }
 
 

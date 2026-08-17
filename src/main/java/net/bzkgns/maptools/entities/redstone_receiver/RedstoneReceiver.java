@@ -1,12 +1,16 @@
 package net.bzkgns.maptools.entities.redstone_receiver;
 
+import net.bzkgns.maptools.Config;
 import net.bzkgns.maptools.Maptools;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -163,7 +167,22 @@ public class RedstoneReceiver extends Entity {
     }
 
     @Override
-    public void kill() {}
+    public void kill() {
+        var server = this.level().getServer();
+        if (server == null) return;
+        if (!Config.SHOW_WARNING_MESSAGE_KILL.getAsBoolean()) return;
+        MutableComponent msg = Component.literal("You can't kill en MapTools entity with the ").withColor(0xFFFF0000)
+                .append(Component.literal("/kill").withStyle(ChatFormatting.YELLOW,  ChatFormatting.UNDERLINE))
+                .append(Component.literal(" command, you need to use the ")).withColor(0xFFFF0000)
+                .append(Component.literal("/discard").withStyle(ChatFormatting.YELLOW,  ChatFormatting.UNDERLINE))
+                .append(Component.literal(" command. You can disable this message in the config or by clicking "))
+                .append(Component.literal("here.").withStyle( style -> style.withColor(ChatFormatting.WHITE)
+                        .applyFormat(ChatFormatting.UNDERLINE).withClickEvent(
+
+                                new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/mt config showWarningKill false"))
+                ));
+        server.getPlayerList().broadcastSystemMessage(msg, false);
+    }
 
     @Override
     public boolean shouldBeSaved() {
@@ -222,10 +241,6 @@ public class RedstoneReceiver extends Entity {
 
     private void executeCommand(RedstoneReceiverCommand receiverCommand) {
         String command = receiverCommand.getCommand();
-        Maptools.LOGGER.info(
-                "RedstoneReceiver executing command: {}",
-                command
-        );
 
         if (command.isBlank()) {
             return;
@@ -234,12 +249,6 @@ public class RedstoneReceiver extends Entity {
         CommandSourceStack source = this.createCommandSourceStack()
                 .withPermission(2)
                 .withCallback((success, result) -> {
-                    Maptools.LOGGER.info(
-                            "RedstoneReceiver executed command: {} with success: {} result: {}",
-                            command,
-                            success,
-                            result
-                    );
 
                     if (success) {
                         ++this.successCount;

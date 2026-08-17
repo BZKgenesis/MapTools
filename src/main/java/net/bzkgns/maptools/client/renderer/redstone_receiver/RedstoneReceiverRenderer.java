@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -35,6 +36,7 @@ public class RedstoneReceiverRenderer extends EntityRenderer<RedstoneReceiver> {
             @NotNull MultiBufferSource buffer,
             int packedLight
     ) {
+
         int fullBright = LightTexture.pack(15, 15);
 
         Minecraft minecraft = Minecraft.getInstance();
@@ -95,6 +97,18 @@ public class RedstoneReceiverRenderer extends EntityRenderer<RedstoneReceiver> {
                     RedstoneReceiverRenderTypes.OCCLUDED
             );
         }
+
+
+        poseStack.translate(0.5D, .25D, 0.5D);
+
+        renderNameTag(
+                entity,
+                Component.empty().append(entity.getDisplayName()).withColor(0xFF5555FF),
+                poseStack,
+                buffer,
+                packedLight,
+                partialTick
+        );
 
 
         poseStack.popPose();

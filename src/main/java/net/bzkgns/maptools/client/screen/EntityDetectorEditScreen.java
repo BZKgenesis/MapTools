@@ -117,7 +117,7 @@ public class EntityDetectorEditScreen extends Screen {
 
 
         this.addRenderableWidget(
-                Button.builder(Component.literal("+ Ajouter une commande"),
+                Button.builder(Component.literal("+ Add a command"),
                                 button ->commandList.addCommand())
                         .bounds(
                                 centerX -220, 75,
@@ -127,7 +127,7 @@ public class EntityDetectorEditScreen extends Screen {
 
         this.addRenderableWidget(
                 Button.builder(
-                        Component.literal("Valider"),
+                        Component.literal("Validate"),
                         button -> save())
                     .bounds(
                         centerX - 100, this.height-40,

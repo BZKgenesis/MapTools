@@ -256,7 +256,7 @@ public class CommandList<
                     0,
                     width - 120,
                     20,
-                    Component.literal("Commande")
+                    Component.literal("Command")
             );
 
             this.command.setMaxLength(32000);
