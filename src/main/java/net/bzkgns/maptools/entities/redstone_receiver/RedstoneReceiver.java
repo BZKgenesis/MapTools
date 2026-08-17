@@ -1,13 +1,22 @@
 package net.bzkgns.maptools.entities.redstone_receiver;
 
+import com.mojang.authlib.minecraft.client.MinecraftClient;
 import net.bzkgns.maptools.Config;
 import net.bzkgns.maptools.Maptools;
+import net.bzkgns.maptools.ModEntityDataSerializers;
+import net.bzkgns.maptools.data_components.ModDataComponents;
+import net.bzkgns.maptools.items.ModItems;
+import net.bzkgns.maptools.network.S2C.SyncRedstoneReceiverPayload;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -18,9 +27,15 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.RelativeMovement;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.PushReaction;
+import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
+import net.neoforged.neoforge.network.PacketDistributor;
+
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,23 +44,17 @@ import java.util.Set;
 
 public class RedstoneReceiver extends Entity {
 
-    private final List<RedstoneReceiverCommand> commands = new ArrayList<>();
-
-    private static final EntityDataAccessor<Boolean> POWERED =
-            SynchedEntityData.defineId(
-                    RedstoneReceiver.class,
-                    EntityDataSerializers.BOOLEAN
-            );
-    private static final EntityDataAccessor<Boolean> ENABLED =
-            SynchedEntityData.defineId(
-                    RedstoneReceiver.class,
-                    EntityDataSerializers.BOOLEAN
-            );
-    private static final EntityDataAccessor<Boolean> XRAY_VISIBLE =
-            SynchedEntityData.defineId(
-                    RedstoneReceiver.class,
-                    EntityDataSerializers.BOOLEAN
-            );
+    private static final EntityDataAccessor<List<RedstoneReceiverCommand>> DATA_COMMANDS = SynchedEntityData
+            .defineId(RedstoneReceiver.class, ModEntityDataSerializers.REDSTONE_RECEIVER_COMMANDS.get());
+    private static final EntityDataAccessor<Boolean> POWERED = SynchedEntityData.defineId(
+            RedstoneReceiver.class,
+            EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> ENABLED = SynchedEntityData.defineId(
+            RedstoneReceiver.class,
+            EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> XRAY_VISIBLE = SynchedEntityData.defineId(
+            RedstoneReceiver.class,
+            EntityDataSerializers.BOOLEAN);
 
     private int successCount = 0;
 
@@ -63,6 +72,7 @@ public class RedstoneReceiver extends Entity {
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_COMMANDS, new ArrayList<>());
         builder.define(POWERED, false);
         builder.define(ENABLED, true);
         builder.define(XRAY_VISIBLE, true);
@@ -70,7 +80,7 @@ public class RedstoneReceiver extends Entity {
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
-        commands.clear();
+        List<RedstoneReceiverCommand> commands = new ArrayList<>();
 
         ListTag commandsTag = tag.getList("Commands", Tag.TAG_COMPOUND);
 
@@ -83,16 +93,15 @@ public class RedstoneReceiver extends Entity {
 
             try {
                 trigger = RedstoneReceiverTrigger.valueOf(
-                        commandTag.getString("Trigger")
-                );
+                        commandTag.getString("Trigger"));
             } catch (IllegalArgumentException e) {
                 trigger = RedstoneReceiverTrigger.ON_SIGNAL;
             }
 
             commands.add(
-                    new RedstoneReceiverCommand(command, trigger)
-            );
+                    new RedstoneReceiverCommand(command, trigger));
         }
+        this.setCommands(commands);
 
         setXrayVisible(tag.getBoolean("XrayVisible"));
 
@@ -104,18 +113,16 @@ public class RedstoneReceiver extends Entity {
     protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
         ListTag commandsTag = new ListTag();
 
-        for (RedstoneReceiverCommand receiverCommand : commands) {
+        for (RedstoneReceiverCommand receiverCommand : getCommands()) {
             CompoundTag commandTag = new CompoundTag();
 
             commandTag.putString(
                     "Command",
-                    receiverCommand.getCommand()
-            );
+                    receiverCommand.getCommand());
 
             commandTag.putString(
                     "Trigger",
-                    receiverCommand.getTrigger().name()
-            );
+                    receiverCommand.getTrigger().name());
 
             commandsTag.add(commandTag);
         }
@@ -129,8 +136,10 @@ public class RedstoneReceiver extends Entity {
     @Override
     public void tick() {
         super.tick();
-        if (!isEnabled()) return;
-        if (level().isClientSide()) return;
+        if (!isEnabled())
+            return;
+        if (level().isClientSide())
+            return;
 
         BlockPos pos = blockPosition();
 
@@ -142,7 +151,7 @@ public class RedstoneReceiver extends Entity {
                 executeCommands(RedstoneReceiverTrigger.ON_SIGNAL);
             }
             executeCommands(RedstoneReceiverTrigger.PULSE);
-        }else{
+        } else {
             if (this.isPowered()) {
                 this.setPowered(false);
                 executeCommands(RedstoneReceiverTrigger.OFF_SIGNAL);
@@ -150,9 +159,9 @@ public class RedstoneReceiver extends Entity {
         }
     }
 
-
     @Override
-    public boolean teleportTo(@NotNull ServerLevel level, double x, double y, double z, @NotNull Set<RelativeMovement> relativeMovements, float yRot, float xRot) {
+    public boolean teleportTo(@NotNull ServerLevel level, double x, double y, double z,
+            @NotNull Set<RelativeMovement> relativeMovements, float yRot, float xRot) {
         return false;
     }
 
@@ -169,18 +178,19 @@ public class RedstoneReceiver extends Entity {
     @Override
     public void kill() {
         var server = this.level().getServer();
-        if (server == null) return;
-        if (!Config.SHOW_WARNING_MESSAGE_KILL.getAsBoolean()) return;
+        if (server == null)
+            return;
+        if (!Config.SHOW_WARNING_MESSAGE_KILL.getAsBoolean())
+            return;
         MutableComponent msg = Component.literal("You can't kill en MapTools entity with the ").withColor(0xFFFF0000)
-                .append(Component.literal("/kill").withStyle(ChatFormatting.YELLOW,  ChatFormatting.UNDERLINE))
+                .append(Component.literal("/kill").withStyle(ChatFormatting.YELLOW, ChatFormatting.UNDERLINE))
                 .append(Component.literal(" command, you need to use the ")).withColor(0xFFFF0000)
-                .append(Component.literal("/discard").withStyle(ChatFormatting.YELLOW,  ChatFormatting.UNDERLINE))
+                .append(Component.literal("/discard").withStyle(ChatFormatting.YELLOW, ChatFormatting.UNDERLINE))
                 .append(Component.literal(" command. You can disable this message in the config or by clicking "))
-                .append(Component.literal("here.").withStyle( style -> style.withColor(ChatFormatting.WHITE)
+                .append(Component.literal("here.").withStyle(style -> style.withColor(ChatFormatting.WHITE)
                         .applyFormat(ChatFormatting.UNDERLINE).withClickEvent(
 
-                                new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/mt config showWarningKill false"))
-                ));
+                                new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/mt config showWarningKill false"))));
         server.getPlayerList().broadcastSystemMessage(msg, false);
     }
 
@@ -192,23 +202,13 @@ public class RedstoneReceiver extends Entity {
     public Boolean isEnabled() {
         return this.entityData.get(ENABLED);
     }
+
     public List<RedstoneReceiverCommand> getCommands() {
-        return Collections.unmodifiableList(commands);
+        return this.entityData.get(DATA_COMMANDS);
     }
 
     public void setCommands(List<RedstoneReceiverCommand> commands) {
-        this.commands.clear();
-        this.commands.addAll(commands);
-    }
-
-    @SuppressWarnings("unused")
-    public void addCommand(RedstoneReceiverCommand command) {
-        this.commands.add(command);
-    }
-
-    @SuppressWarnings("unused")
-    public void removeCommand(int index) {
-        this.commands.remove(index);
+        this.entityData.set(DATA_COMMANDS, List.copyOf(commands));
     }
 
     public Boolean isXrayVisible() {
@@ -232,7 +232,7 @@ public class RedstoneReceiver extends Entity {
     }
 
     private void executeCommands(RedstoneReceiverTrigger trigger) {
-        for (RedstoneReceiverCommand receiverCommand : commands) {
+        for (RedstoneReceiverCommand receiverCommand : getCommands()) {
             if (receiverCommand.getTrigger() == trigger) {
                 executeCommand(receiverCommand);
             }
@@ -255,7 +255,8 @@ public class RedstoneReceiver extends Entity {
                     }
                 });
         var server = this.getServer();
-        if (server == null) return;
+        if (server == null)
+            return;
         var dispatcher = server
                 .getCommands()
                 .getDispatcher();
@@ -267,12 +268,41 @@ public class RedstoneReceiver extends Entity {
 
     }
 
+    @Override
+    @Nullable
+    public ItemStack getPickResult() {
+        ItemStack stack = new ItemStack(
+                ModItems.REDSTONE_RECEIVER_EDITOR.get());
+
+        stack.set(
+                ModDataComponents.REDSTONE_RECEIVER_CONFIG.get(),
+                new RedstoneReceiverConfig(
+                        this.isEnabled(),
+                        List.copyOf(this.getCommands()),
+                        this.hasCustomName()
+                                ? this.getCustomName().getString()
+                                : "Redstone Receiver",
+                        this.isXrayVisible()));
+
+        stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+        return stack;
+    }
 
     @Override
-    public boolean isPickable() {return false;}
+    public boolean isPickable() {
+        if (level().isClientSide) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player == null)
+                return false;
+            return mc.player.getMainHandItem().is(ModItems.REDSTONE_RECEIVER_EDITOR.get());
+        }
+        return false;
+    }
 
     @Override
-    public boolean isPushable() {return false;}
+    public boolean isPushable() {
+        return false;
+    }
 
     @Override
     public boolean isCustomNameVisible() {
@@ -280,13 +310,19 @@ public class RedstoneReceiver extends Entity {
     }
 
     @Override
-    public boolean canBeCollidedWith() {return false;}
+    public boolean canBeCollidedWith() {
+        return false;
+    }
 
     @Override
-    public boolean isInvulnerable() {return true;}
+    public boolean isInvulnerable() {
+        return true;
+    }
 
     @Override
-    public boolean isIgnoringBlockTriggers() {return true;}
+    public boolean isIgnoringBlockTriggers() {
+        return true;
+    }
 
     @Override
     public @NotNull PushReaction getPistonPushReaction() {
@@ -294,13 +330,13 @@ public class RedstoneReceiver extends Entity {
     }
 
     @Override
-    protected boolean canAddPassenger(@NotNull Entity passenger) {return false;}
-
+    protected boolean canAddPassenger(@NotNull Entity passenger) {
+        return false;
+    }
 
     @Override
     protected void addPassenger(@NotNull Entity passenger) {
         throw new IllegalStateException(
-                "RedstoneReceiver cannot have passengers"
-        );
+                "RedstoneReceiver cannot have passengers");
     }
 }

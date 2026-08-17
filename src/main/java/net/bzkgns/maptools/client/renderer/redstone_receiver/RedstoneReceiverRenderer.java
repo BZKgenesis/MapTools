@@ -106,7 +106,7 @@ public class RedstoneReceiverRenderer extends EntityRenderer<RedstoneReceiver> {
                 Component.empty().append(entity.getDisplayName()).withColor(0xFF5555FF),
                 poseStack,
                 buffer,
-                packedLight,
+                fullBright,
                 partialTick
         );
 

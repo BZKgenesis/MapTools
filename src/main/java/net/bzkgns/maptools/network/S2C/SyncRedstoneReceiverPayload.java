@@ -10,25 +10,25 @@ import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
 
-public record OpenRedstoneReceiverPayload(int receiverId,
+public record SyncRedstoneReceiverPayload(int receiverId,
                                           RedstoneReceiverConfig config) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<OpenRedstoneReceiverPayload> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Maptools.MOD_ID, "open_redstone_receiver"));
+    public static final Type<SyncRedstoneReceiverPayload> TYPE =
+            new Type<>(ResourceLocation.fromNamespaceAndPath(Maptools.MOD_ID, "sync_redstone_receiver"));
 
 
-    public static final StreamCodec<ByteBuf, OpenRedstoneReceiverPayload> STREAM_CODEC =
+    public static final StreamCodec<ByteBuf, SyncRedstoneReceiverPayload> STREAM_CODEC =
             StreamCodec.composite(
                     ByteBufCodecs.VAR_INT,
-                    OpenRedstoneReceiverPayload::receiverId,
+                    SyncRedstoneReceiverPayload::receiverId,
 
                     RedstoneReceiverConfig.CONFIG_STREAM_CODEC,
-                    OpenRedstoneReceiverPayload::config,
+                    SyncRedstoneReceiverPayload::config,
 
-                    OpenRedstoneReceiverPayload::new
+                    SyncRedstoneReceiverPayload::new
             );
 
     @Override
-    public CustomPacketPayload.@NotNull Type<? extends CustomPacketPayload> type() {
+    public @NotNull Type<? extends CustomPacketPayload> type() {
         return TYPE;
     }
 }

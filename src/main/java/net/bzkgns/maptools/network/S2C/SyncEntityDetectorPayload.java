@@ -9,22 +9,22 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
-public record OpenEntityDetectorPayload(int detectorId,
+public record SyncEntityDetectorPayload(int detectorId,
         EntityDetectorConfig config) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<OpenEntityDetectorPayload> TYPE = new CustomPacketPayload.Type<>(
-            ResourceLocation.fromNamespaceAndPath(Maptools.MOD_ID, "open_entity_detector"));
+    public static final Type<SyncEntityDetectorPayload> TYPE = new Type<>(
+            ResourceLocation.fromNamespaceAndPath(Maptools.MOD_ID, "sync_entity_detector"));
 
-    public static final StreamCodec<ByteBuf, OpenEntityDetectorPayload> STREAM_CODEC = StreamCodec.composite(
+    public static final StreamCodec<ByteBuf, SyncEntityDetectorPayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT,
-            OpenEntityDetectorPayload::detectorId,
+            SyncEntityDetectorPayload::detectorId,
 
             EntityDetectorConfig.CONFIG_STREAM_CODEC,
-            OpenEntityDetectorPayload::config,
+            SyncEntityDetectorPayload::config,
 
-            OpenEntityDetectorPayload::new);
+            SyncEntityDetectorPayload::new);
 
     @Override
-    public CustomPacketPayload.@NotNull Type<? extends CustomPacketPayload> type() {
+    public @NotNull Type<? extends CustomPacketPayload> type() {
         return TYPE;
     }
 }

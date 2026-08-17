@@ -20,7 +20,7 @@ public class ModEntities {
             ENTITY_TYPES.register("redstone_receiver", () ->
                     EntityType.Builder
                             .of(RedstoneReceiver::new, MobCategory.MISC)
-                            .sized(1.0F, 1.0F)
+                            .sized(1.02F, 1.01F)
                             .clientTrackingRange(64)
                             .updateInterval(3)
                             .build(

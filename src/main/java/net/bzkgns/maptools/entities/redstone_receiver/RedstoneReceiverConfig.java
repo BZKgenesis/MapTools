@@ -1,7 +1,8 @@
 package net.bzkgns.maptools.entities.redstone_receiver;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
-import net.bzkgns.maptools.network.C2S.UpdateRedstoneReceiverPayload;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 
@@ -13,7 +14,7 @@ public record RedstoneReceiverConfig(
         String displayName,
         boolean xrayVisible
 ) {
-    public static final StreamCodec<ByteBuf, RedstoneReceiverConfig> CONFIG_CODEC =
+    public static final StreamCodec<ByteBuf, RedstoneReceiverConfig> CONFIG_STREAM_CODEC =
             StreamCodec.of(
                     (buf, config) -> {
                         ByteBufCodecs.BOOL.encode(
@@ -21,8 +22,9 @@ public record RedstoneReceiverConfig(
                                 config.enabled()
                         );
 
-                        RedstoneReceiverCommand.COMMAND_CODEC.apply(
-                                ByteBufCodecs.list()).encode(buf, config.commands);
+                        RedstoneReceiverCommand.COMMAND_STREAM_CODEC.apply(
+                                ByteBufCodecs.list()
+                        ).encode(buf, config.commands);
 
                         ByteBufCodecs.STRING_UTF8.encode(
                                 buf,
@@ -37,20 +39,21 @@ public record RedstoneReceiverConfig(
 
                     buf -> new RedstoneReceiverConfig(
                             ByteBufCodecs.BOOL.decode(buf),
-                            RedstoneReceiverCommand.COMMAND_CODEC.apply(
+                            RedstoneReceiverCommand.COMMAND_STREAM_CODEC.apply(
                                     ByteBufCodecs.list()).decode(buf),
                             ByteBufCodecs.STRING_UTF8.decode(buf),
                             ByteBufCodecs.BOOL.decode(buf)
                     )
             );
-    public static final StreamCodec<ByteBuf, UpdateRedstoneReceiverPayload> STREAM_CODEC =
-            StreamCodec.composite(
-                    ByteBufCodecs.VAR_INT,
-                    UpdateRedstoneReceiverPayload::receiverId,
-
-                    CONFIG_CODEC,
-                    UpdateRedstoneReceiverPayload::config,
-
-                    UpdateRedstoneReceiverPayload::new
-            );
+    public static final Codec<RedstoneReceiverConfig> CONFIG_CODEC = RecordCodecBuilder.create(instance ->
+            instance.group(
+                    Codec.BOOL.fieldOf("enabled").forGetter(RedstoneReceiverConfig::enabled),
+                    RedstoneReceiverCommand.COMMAND_CODEC
+                            .listOf()
+                            .fieldOf("commands")
+                            .forGetter(RedstoneReceiverConfig::commands),
+                    Codec.STRING.fieldOf("display_name").forGetter(RedstoneReceiverConfig::displayName),
+                    Codec.BOOL.fieldOf("xray_visible").forGetter(RedstoneReceiverConfig::xrayVisible)
+            ).apply(instance, RedstoneReceiverConfig::new)
+    );
 }

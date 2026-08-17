@@ -13,7 +13,6 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -104,7 +103,7 @@ public class EntityDetectorRenderer extends EntityRenderer<EntityDetector> {
                 Component.empty().append(entity.getDisplayName()).withColor(0xFFFF5555),
                 poseStack,
                 buffer,
-                packedLight,
+                fullBright,
                 partialTick
         );
         poseStack.translate(0D, -.25D, 0D);

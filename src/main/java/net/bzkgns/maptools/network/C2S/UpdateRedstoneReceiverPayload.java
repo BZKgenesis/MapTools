@@ -20,7 +20,7 @@ public record UpdateRedstoneReceiverPayload(int receiverId,
             ByteBufCodecs.VAR_INT,
             UpdateRedstoneReceiverPayload::receiverId,
 
-            RedstoneReceiverConfig.CONFIG_CODEC,
+            RedstoneReceiverConfig.CONFIG_STREAM_CODEC,
             UpdateRedstoneReceiverPayload::config,
 
             UpdateRedstoneReceiverPayload::new
