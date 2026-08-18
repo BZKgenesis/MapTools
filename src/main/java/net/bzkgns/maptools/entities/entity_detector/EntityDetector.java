@@ -1,9 +1,21 @@
 package net.bzkgns.maptools.entities.entity_detector;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+
+import javax.annotation.Nullable;
+
+import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3f;
+
 import net.bzkgns.maptools.Config;
 import net.bzkgns.maptools.Maptools;
-import net.bzkgns.maptools.ModEntityDataSerializers;
 import net.bzkgns.maptools.data_components.ModDataComponents;
+import net.bzkgns.maptools.entity_data_serializers.ModEntityDataSerializers;
 import net.bzkgns.maptools.items.ModItems;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -32,12 +44,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
-import org.jetbrains.annotations.NotNull;
-import org.joml.Vector3f;
-
-import java.util.*;
-
-import javax.annotation.Nullable;
 
 public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
 
@@ -66,13 +72,13 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
 
     private Set<UUID> previouslyInZone = new HashSet<>();
 
-    public EntityDetector(EntityType<EntityDetector> entityType, Level level) {
+    public EntityDetector(final EntityType<EntityDetector> entityType, final Level level) {
         super(entityType, level);
         this.setNoGravity(true);
         this.noPhysics = true;
     }
 
-    public void setConfigNoPos(EntityDetectorConfig config) {
+    public void setConfigNoPos(final EntityDetectorConfig config) {
         this.setSize(config.sizeX(), config.sizeY(), config.sizeZ());
         this.setCustomName(Component.literal(config.displayName()));
 
@@ -82,7 +88,7 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
         this.setCommands(config.commands());
     }
 
-    public void setConfig(EntityDetectorConfig config) {
+    public void setConfig(final EntityDetectorConfig config) {
         this.setConfigNoPos(config);
         this.setPos(new Vec3(config.posX(), config.posY(), config.posZ()));
     }
@@ -101,85 +107,8 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
                 this.getPosition(0).z);
     }
 
-    @Override
-    protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        builder.define(DATA_COMMANDS, new ArrayList<>());
-        builder.define(ENABLED, true);
-        builder.define(ENTITY_DETECTED, false);
-        builder.define(ZONE_ID, "default");
-        builder.define(SIZE_X, DEFAULT_SIZE_X);
-        builder.define(SIZE_Y, DEFAULT_SIZE_Y);
-        builder.define(SIZE_Z, DEFAULT_SIZE_Z);
-    }
-
-    @Override
-    protected void readAdditionalSaveData(CompoundTag tag) {
-
-        this.setEnabled(tag.getBoolean("enabled"));
-
-        setEntityDetected(tag.getBoolean("entity_detected"));
-        if (tag.contains("size_x")) {
-            setSize(tag.getFloat("size_x"), tag.getFloat("size_y"), tag.getFloat("size_z"));
-        }
-
-        this.setZoneId(tag.getString("zone_id"));
-        List<EntityDetectorCommand> commands = new ArrayList<>();
-
-        ListTag commandsTag = tag.getList("Commands", Tag.TAG_COMPOUND);
-
-        for (int i = 0; i < commandsTag.size(); i++) {
-            CompoundTag commandTag = commandsTag.getCompound(i);
-
-            String command = commandTag.getString("Command");
-
-            EntityDetectorTrigger trigger;
-
-            try {
-                trigger = EntityDetectorTrigger.valueOf(
-                        commandTag.getString("Trigger"));
-            } catch (IllegalArgumentException e) {
-                trigger = EntityDetectorTrigger.ON_ENTER;
-            }
-
-            commands.add(
-                    new EntityDetectorCommand(command, trigger));
-        }
-        this.setCommands(commands);
-    }
-
-    @Override
-    protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
-        ListTag commandsTag = new ListTag();
-
-        for (EntityDetectorCommand entityDetectorCommand : this.getCommands()) {
-            CompoundTag commandTag = new CompoundTag();
-
-            commandTag.putString(
-                    "Command",
-                    entityDetectorCommand.getCommand());
-
-            commandTag.putString(
-                    "Trigger",
-                    entityDetectorCommand.getTrigger().name());
-
-            commandsTag.add(commandTag);
-        }
-
-        tag.put("Commands", commandsTag);
-        tag.putBoolean("enabled", isEnabled());
-        tag.putBoolean("entity_detected", isEntityDetected());
-        tag.putFloat("size_x", getSize().x);
-        tag.putFloat("size_y", getSize().y);
-        tag.putFloat("size_z", getSize().z);
-        tag.putString("zone_id", this.getZoneId());
-    }
-
     public boolean isEntityDetected() {
         return this.entityData.get(ENTITY_DETECTED);
-    }
-
-    private void setEntityDetected(boolean detected) {
-        this.entityData.set(ENTITY_DETECTED, detected);
     }
 
     public Vector3f getSize() {
@@ -189,7 +118,7 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
                 this.entityData.get(SIZE_Z));
     }
 
-    public void setSize(float x, float y, float z) {
+    public void setSize(final float x, final float y, final float z) {
         this.entityData.set(SIZE_X, x);
         this.entityData.set(SIZE_Y, y);
         this.entityData.set(SIZE_Z, z);
@@ -199,7 +128,7 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
         return this.entityData.get(ENABLED);
     }
 
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(final boolean enabled) {
         this.entityData.set(ENABLED, enabled);
     }
 
@@ -207,7 +136,7 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
         return this.entityData.get(DATA_COMMANDS);
     }
 
-    public void setCommands(List<EntityDetectorCommand> commands) {
+    public void setCommands(final List<EntityDetectorCommand> commands) {
         this.entityData.set(DATA_COMMANDS, List.copyOf(commands));
     }
 
@@ -215,23 +144,8 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
         return this.entityData.get(ZONE_ID);
     }
 
-    public void setZoneId(String zoneId) {
+    public void setZoneId(final String zoneId) {
         this.entityData.set(ZONE_ID, zoneId);
-    }
-
-    private String tagInZone() {
-        return "zone_" + getZoneId() + "_in";
-    }
-
-    private String tagLast() {
-        return "zone_" + getZoneId() + "_last";
-    }
-
-    private AABB computeDetectionBox() {
-        Vec3 pos = this.position();
-        return new AABB(
-                pos.x - getSize().x / 2, pos.y - getSize().y / 2 + .5f, pos.z - getSize().z / 2,
-                pos.x + getSize().x / 2, pos.y + getSize().y / 2 + .5f, pos.z + getSize().z / 2);
     }
 
     @Override
@@ -242,17 +156,17 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
         if (this.level().isClientSide())
             return;
 
-        AABB detectionBox = computeDetectionBox();
-        var currentEntities = this.level().getEntitiesOfClass(Entity.class, detectionBox, e -> e != this);
+        final AABB detectionBox = computeDetectionBox();
+        final var currentEntities = this.level().getEntitiesOfClass(Entity.class, detectionBox, e -> e != this);
 
-        Set<UUID> currentIds = new HashSet<>();
-        for (Entity entity : currentEntities) {
+        final Set<UUID> currentIds = new HashSet<>();
+        for (final Entity entity : currentEntities) {
             currentIds.add(entity.getUUID());
         }
 
-        for (UUID uuid : previouslyInZone) {
+        for (final UUID uuid : previouslyInZone) {
             if (!currentIds.contains(uuid)) {
-                Entity leaving = ((ServerLevel) this.level()).getEntity(uuid);
+                final Entity leaving = ((ServerLevel) this.level()).getEntity(uuid);
                 if (leaving != null) {
                     leaving.removeTag(tagInZone());
                     executeCommands(EntityDetectorTrigger.ON_LEAVE, leaving);
@@ -261,7 +175,7 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
         }
 
         boolean someoneEntered = false;
-        for (Entity entity : currentEntities) {
+        for (final Entity entity : currentEntities) {
             entity.addTag(tagInZone());
             if (!previouslyInZone.contains(entity.getUUID())) {
                 someoneEntered = true;
@@ -279,76 +193,31 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
         executeCommands(EntityDetectorTrigger.TICK, this);
     }
 
-    private void executeCommands(EntityDetectorTrigger trigger, Entity contextEntity) {
-        for (EntityDetectorCommand entityDetectorCommand : this.getCommands()) {
-            if (entityDetectorCommand.getTrigger() == trigger) {
-                executeCommand(entityDetectorCommand, contextEntity);
-            }
-        }
-    }
-
-    private void executeCommand(EntityDetectorCommand entityDetectorCommand, Entity contextEntity) {
-        String command = entityDetectorCommand.getCommand();
-        if (command == null || command.isBlank())
-            return;
-        MinecraftServer server = this.level().getServer();
-        if (server == null)
-            return;
-
-        CommandSourceStack source = createSourceStack(contextEntity);
-        var dispatcher = server
-                .getCommands()
-                .getDispatcher();
-        var parseResults = dispatcher.parse(command, source);
-        try {
-            server.getCommands().performCommand(parseResults, command);
-        } catch (Exception e) {
-
-            Maptools.LOGGER.error("[" + getDisplayName().getString() + "] Error executing command '{}': {}", command,
-                    e.getMessage());
-        }
-    }
-
-    private CommandSourceStack createSourceStack(Entity contextEntity) {
-        Entity anchor = contextEntity != null ? contextEntity : this;
-        Vec3 pos = anchor.position();
-        Vec2 rot = new Vec2(anchor.getXRot(), anchor.getYRot());
-        return new CommandSourceStack(
-                CommandSource.NULL,
-                pos,
-                rot,
-                (ServerLevel) this.level(),
-                2,
-                anchor.getName().getString(),
-                anchor.getDisplayName(),
-                Objects.requireNonNull(this.level().getServer()),
-                anchor);
-    }
-
     @Override
-    public boolean teleportTo(@NotNull ServerLevel level, double x, double y, double z,
-            @NotNull Set<RelativeMovement> relativeMovements, float yRot, float xRot) {
+    public boolean teleportTo(@NotNull final ServerLevel level, final double x, final double y, final double z,
+            @NotNull final Set<RelativeMovement> relativeMovements, final float yRot, final float xRot) {
         return false;
     }
 
     @Override
-    public void teleportRelative(double dx, double dy, double dz) {
+    public void teleportRelative(final double dx, final double dy, final double dz) {
 
     }
 
     @Override
-    public void teleportTo(double x, double y, double z) {
+    public void teleportTo(final double x, final double y, final double z) {
 
     }
 
     @Override
     public void kill() {
-        var server = this.level().getServer();
+        final var server = this.level().getServer();
         if (server == null)
             return;
         if (!Config.SHOW_WARNING_MESSAGE_KILL.getAsBoolean())
             return;
-        MutableComponent msg = Component.literal("You can't kill en MapTools entity with the ").withColor(0xFFFF0000)
+        final MutableComponent msg = Component.literal("You can't kill en MapTools entity with the ")
+                .withColor(0xFFFF0000)
                 .append(Component.literal("/kill").withStyle(ChatFormatting.YELLOW, ChatFormatting.UNDERLINE))
                 .append(Component.literal(" command, you need to use the ")).withColor(0xFFFF0000)
                 .append(Component.literal("/discard").withStyle(ChatFormatting.YELLOW, ChatFormatting.UNDERLINE))
@@ -363,7 +232,7 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
     @Override
     @Nullable
     public ItemStack getPickResult() {
-        ItemStack stack = new ItemStack(
+        final ItemStack stack = new ItemStack(
                 ModItems.ENTITY_DETECTOR_EDITOR.get());
 
         stack.set(
@@ -391,7 +260,7 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
     @Override
     public boolean isPickable() {
         if (level().isClientSide) {
-            Minecraft mc = Minecraft.getInstance();
+            final Minecraft mc = Minecraft.getInstance();
             if (mc.player == null)
                 return false;
             return mc.player.getMainHandItem().is(ModItems.ENTITY_DETECTOR_EDITOR.get());
@@ -430,29 +299,167 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
     }
 
     @Override
-    protected boolean canAddPassenger(@NotNull Entity passenger) {
-        return false;
-    }
-
-    @Override
-    protected void addPassenger(@NotNull Entity passenger) {
-        throw new IllegalStateException(
-                "EntityDetector cannot have passengers");
-    }
-
-    @Override
-    public void writeSpawnData(RegistryFriendlyByteBuf buf) {
-        Vector3f size = this.getSize();
+    public void writeSpawnData(final RegistryFriendlyByteBuf buf) {
+        final Vector3f size = this.getSize();
         buf.writeFloat(size.x);
         buf.writeFloat(size.y);
         buf.writeFloat(size.z);
     }
 
     @Override
-    public void readSpawnData(RegistryFriendlyByteBuf buf) {
-        float sizeX = buf.readFloat();
-        float sizeY = buf.readFloat();
-        float sizeZ = buf.readFloat();
+    public void readSpawnData(final RegistryFriendlyByteBuf buf) {
+        final float sizeX = buf.readFloat();
+        final float sizeY = buf.readFloat();
+        final float sizeZ = buf.readFloat();
         setSize(sizeX, sizeY, sizeZ);
+    }
+
+    @Override
+    protected void defineSynchedData(final SynchedEntityData.Builder builder) {
+        builder.define(DATA_COMMANDS, new ArrayList<>());
+        builder.define(ENABLED, true);
+        builder.define(ENTITY_DETECTED, false);
+        builder.define(ZONE_ID, "default");
+        builder.define(SIZE_X, DEFAULT_SIZE_X);
+        builder.define(SIZE_Y, DEFAULT_SIZE_Y);
+        builder.define(SIZE_Z, DEFAULT_SIZE_Z);
+    }
+
+    @Override
+    protected void readAdditionalSaveData(final CompoundTag tag) {
+
+        this.setEnabled(tag.getBoolean("enabled"));
+
+        setEntityDetected(tag.getBoolean("entity_detected"));
+        if (tag.contains("size_x")) {
+            setSize(tag.getFloat("size_x"), tag.getFloat("size_y"), tag.getFloat("size_z"));
+        }
+
+        this.setZoneId(tag.getString("zone_id"));
+        final List<EntityDetectorCommand> commands = new ArrayList<>();
+
+        final ListTag commandsTag = tag.getList("Commands", Tag.TAG_COMPOUND);
+
+        for (int i = 0; i < commandsTag.size(); i++) {
+            final CompoundTag commandTag = commandsTag.getCompound(i);
+
+            final String command = commandTag.getString("Command");
+
+            EntityDetectorTrigger trigger;
+
+            try {
+                trigger = EntityDetectorTrigger.valueOf(
+                        commandTag.getString("Trigger"));
+            } catch (final IllegalArgumentException e) {
+                trigger = EntityDetectorTrigger.ON_ENTER;
+            }
+
+            commands.add(
+                    new EntityDetectorCommand(command, trigger));
+        }
+        this.setCommands(commands);
+    }
+
+    @Override
+    protected void addAdditionalSaveData(@NotNull final CompoundTag tag) {
+        final ListTag commandsTag = new ListTag();
+
+        for (final EntityDetectorCommand entityDetectorCommand : this.getCommands()) {
+            final CompoundTag commandTag = new CompoundTag();
+
+            commandTag.putString(
+                    "Command",
+                    entityDetectorCommand.getCommand());
+
+            commandTag.putString(
+                    "Trigger",
+                    entityDetectorCommand.getTrigger().name());
+
+            commandsTag.add(commandTag);
+        }
+
+        tag.put("Commands", commandsTag);
+        tag.putBoolean("enabled", isEnabled());
+        tag.putBoolean("entity_detected", isEntityDetected());
+        tag.putFloat("size_x", getSize().x);
+        tag.putFloat("size_y", getSize().y);
+        tag.putFloat("size_z", getSize().z);
+        tag.putString("zone_id", this.getZoneId());
+    }
+
+    @Override
+    protected boolean canAddPassenger(@NotNull final Entity passenger) {
+        return false;
+    }
+
+    @Override
+    protected void addPassenger(@NotNull final Entity passenger) {
+        throw new IllegalStateException(
+                "EntityDetector cannot have passengers");
+    }
+
+    private void setEntityDetected(final boolean detected) {
+        this.entityData.set(ENTITY_DETECTED, detected);
+    }
+
+    private String tagInZone() {
+        return "zone_" + getZoneId() + "_in";
+    }
+
+    private String tagLast() {
+        return "zone_" + getZoneId() + "_last";
+    }
+
+    private AABB computeDetectionBox() {
+        final Vec3 pos = this.position();
+        return new AABB(
+                pos.x - getSize().x / 2, pos.y - getSize().y / 2 + .5f, pos.z - getSize().z / 2,
+                pos.x + getSize().x / 2, pos.y + getSize().y / 2 + .5f, pos.z + getSize().z / 2);
+    }
+
+    private void executeCommands(final EntityDetectorTrigger trigger, final Entity contextEntity) {
+        for (final EntityDetectorCommand entityDetectorCommand : this.getCommands()) {
+            if (entityDetectorCommand.getTrigger() == trigger) {
+                executeCommand(entityDetectorCommand, contextEntity);
+            }
+        }
+    }
+
+    private void executeCommand(final EntityDetectorCommand entityDetectorCommand, final Entity contextEntity) {
+        final String command = entityDetectorCommand.getCommand();
+        if (command == null || command.isBlank())
+            return;
+        final MinecraftServer server = this.level().getServer();
+        if (server == null)
+            return;
+
+        final CommandSourceStack source = createSourceStack(contextEntity);
+        final var dispatcher = server
+                .getCommands()
+                .getDispatcher();
+        final var parseResults = dispatcher.parse(command, source);
+        try {
+            server.getCommands().performCommand(parseResults, command);
+        } catch (final Exception e) {
+
+            Maptools.LOGGER.error("[" + getDisplayName().getString() + "] Error executing command '{}': {}", command,
+                    e.getMessage());
+        }
+    }
+
+    private CommandSourceStack createSourceStack(final Entity contextEntity) {
+        final Entity anchor = contextEntity != null ? contextEntity : this;
+        final Vec3 pos = anchor.position();
+        final Vec2 rot = new Vec2(anchor.getXRot(), anchor.getYRot());
+        return new CommandSourceStack(
+                CommandSource.NULL,
+                pos,
+                rot,
+                (ServerLevel) this.level(),
+                2,
+                anchor.getName().getString(),
+                anchor.getDisplayName(),
+                Objects.requireNonNull(this.level().getServer()),
+                anchor);
     }
 }
