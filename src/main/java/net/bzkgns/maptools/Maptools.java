@@ -2,6 +2,7 @@ package net.bzkgns.maptools;
 
 import net.bzkgns.maptools.client.datagen.ModItemModelProvider;
 import net.bzkgns.maptools.commands.DiscardCommand;
+import net.bzkgns.maptools.commands.ResetCommand;
 import net.bzkgns.maptools.commands.ShowWarningKillConfigCommand;
 import net.bzkgns.maptools.data_components.ModDataComponents;
 import net.bzkgns.maptools.entities.ModEntities;
@@ -26,8 +27,6 @@ import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
 
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.level.block.Blocks;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
@@ -101,6 +100,7 @@ public class Maptools {
 
         DiscardCommand.register(event.getDispatcher());
         ShowWarningKillConfigCommand.register(event.getDispatcher());
+        ResetCommand.register(event.getDispatcher());
     }
 
     public void gatherData(GatherDataEvent event) {

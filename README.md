@@ -43,11 +43,23 @@ Triggers
 ## Entity Detector
 The **Entity Detector** allows you to detect entities whithin an area. The area can be any size, while the interaction box remains fixed.
 
+
+You can set a custom Zone Id. All entities currently inside the Entity Detector's  zone receive the following tag: `zone_<zone_id>_id`. 
+
+The last player who entered receive this additional tag : `zone_<zone_id>_last`.
+
 Triggers
 
-| Name            | Behavior                                                                                                                                  |
-|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| ON_ENTER        | Executes the command when an entity enters the area. The `@s` selector targets that entity.                                              |
-| ON_LEAVE        | Executes the command when an entity leaves the area. The `@s` selector targets that entity.                                              |
-| TICK            | Executes the command every tick while at least one entity is in the area. The command is executed once per tick regardless of the number of entities in the area.|
-| TICK_PER_ENTITY | Executes the command every tick for each entity in the area. The `@s` selector targets the corresponding entity. |
+| Name            | Behavior                                                    | `@s` targets the corresponding entity* |
+|-----------------|--------------------------------------------------------------------------------------------------------------------|
+| ON_ENTER        | Executes the command when an entity enters the area.        | Yes |
+| ON_LEAVE        | Executes the command when an entity leaves the area.        | Yes |
+| TICK            | Executes the command once every tick while at least one entity is inside the area, regardless of the number of entities present. | No |
+| TICK_PER_ENTITY | Executes the command every tick for each entity in the area. | Yes |
+| ENTER_ONLY_ONCE | Executes the command when an entity enters the area for the first time. The list of entities that have entered the area can be reset using `/mt reset <entity_detector_selector>`. | Yes |
+| ON_FIRST_ENTER  | Executes the command when an entity enters the area while it was previously empty. If multiple entities enter during the same tick, the command is executed only for the first entity. | Yes.** |
+| ON_LAST_ENTER   | Executes the command when an entity leaves the area and it becomes empty. | Yes |
+| LEAVE_ONLY_ONCE | Executes the command when an entity leaves the area for the first time. The list of entities that have left the area can be reset using `/mt reset <entity_detector_selector>`. | Yes |
+
+* When applicable, the `@s` selector targets the entity that triggered the command.
+** The *first* entity refers to the first returned by Minecrat's `.getEntities()` method. For players, this means the player who has been connected to the server the longest.

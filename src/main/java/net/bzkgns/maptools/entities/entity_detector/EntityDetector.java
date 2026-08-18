@@ -15,6 +15,7 @@ import org.joml.Vector3f;
 import net.bzkgns.maptools.Config;
 import net.bzkgns.maptools.Maptools;
 import net.bzkgns.maptools.data_components.ModDataComponents;
+import net.bzkgns.maptools.entities.ResetableEntity;
 import net.bzkgns.maptools.entity_data_serializers.ModEntityDataSerializers;
 import net.bzkgns.maptools.items.ModItems;
 import net.minecraft.ChatFormatting;
@@ -45,7 +46,7 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 
-public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
+public class EntityDetector extends Entity implements IEntityWithComplexSpawn, ResetableEntity {
 
     private static final EntityDataAccessor<Boolean> ENABLED = SynchedEntityData.defineId(EntityDetector.class,
             EntityDataSerializers.BOOLEAN);
@@ -71,6 +72,8 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
             EntityDataSerializers.STRING);
 
     private Set<UUID> previouslyInZone = new HashSet<>();
+    private final Set<UUID> alreadyEnteredZone = new HashSet<>();
+    private final Set<UUID> alreadyLeavedZone = new HashSet<>();
 
     public EntityDetector(final EntityType<EntityDetector> entityType, final Level level) {
         super(entityType, level);
@@ -151,46 +154,103 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
     @Override
     public void tick() {
         this.baseTick();
+
         if (!isEnabled())
             return;
+
         if (this.level().isClientSide())
             return;
 
         final AABB detectionBox = computeDetectionBox();
-        final var currentEntities = this.level().getEntitiesOfClass(Entity.class, detectionBox, e -> e != this);
+        final var currentEntities = this.level().getEntitiesOfClass(
+                Entity.class,
+                detectionBox,
+                e -> e != this);
 
         final Set<UUID> currentIds = new HashSet<>();
         for (final Entity entity : currentEntities) {
             currentIds.add(entity.getUUID());
         }
 
+        final ServerLevel serverLevel = (ServerLevel) this.level();
+
+        final boolean zoneWasEmpty = previouslyInZone.isEmpty();
+
         for (final UUID uuid : previouslyInZone) {
-            if (!currentIds.contains(uuid)) {
-                final Entity leaving = ((ServerLevel) this.level()).getEntity(uuid);
-                if (leaving != null) {
-                    leaving.removeTag(tagInZone());
-                    executeCommands(EntityDetectorTrigger.ON_LEAVE, leaving);
-                }
+            if (currentIds.contains(uuid))
+                continue;
+
+            final Entity entity = serverLevel.getEntity(uuid);
+            if (entity == null)
+                continue;
+
+            final List<EntityDetectorTrigger> triggers = new ArrayList<>();
+
+            // Cette entité vient de quitter la zone.
+            if (alreadyLeavedZone.add(uuid)) {
+                triggers.add(EntityDetectorTrigger.LEAVE_ONLY_ONCE);
             }
+
+            triggers.add(EntityDetectorTrigger.ON_LEAVE);
+
+            if (currentIds.isEmpty()) {
+                triggers.add(EntityDetectorTrigger.ON_LAST_LEAVE);
+            }
+
+            entity.removeTag(tagInZone());
+
+            executeCommands(
+                    entity,
+                    triggers.toArray(EntityDetectorTrigger[]::new));
         }
 
-        boolean someoneEntered = false;
+        boolean firstEntityEntered = false;
+
         for (final Entity entity : currentEntities) {
+            final UUID uuid = entity.getUUID();
+
+            final boolean wasInZone = previouslyInZone.contains(uuid);
+            final boolean isEntering = !wasInZone;
+
+            final List<EntityDetectorTrigger> triggers = new ArrayList<>();
+
             entity.addTag(tagInZone());
-            if (!previouslyInZone.contains(entity.getUUID())) {
-                someoneEntered = true;
+
+            if (isEntering) {
+                if (alreadyEnteredZone.add(uuid)) {
+                    triggers.add(EntityDetectorTrigger.ENTER_ONLY_ONCE);
+                }
+
+                triggers.add(EntityDetectorTrigger.ON_ENTER);
+
+                if (zoneWasEmpty && !firstEntityEntered) {
+                    triggers.add(EntityDetectorTrigger.ON_FIRST_ENTER);
+                    firstEntityEntered = true;
+                }
 
                 entity.addTag(tagLast());
-                executeCommands(EntityDetectorTrigger.ON_ENTER, entity);
             } else {
                 entity.removeTag(tagLast());
             }
+
+            triggers.add(EntityDetectorTrigger.TICK_PER_ENTITY);
+
+            executeCommands(
+                    entity,
+                    triggers.toArray(EntityDetectorTrigger[]::new));
+        }
+
+        if (!currentIds.isEmpty()) {
+            executeCommands(this, EntityDetectorTrigger.TICK);
         }
 
         previouslyInZone = currentIds;
         setEntityDetected(!currentIds.isEmpty());
+    }
 
-        executeCommands(EntityDetectorTrigger.TICK, this);
+    public void reset() {
+        alreadyEnteredZone.clear();
+        alreadyLeavedZone.clear();
     }
 
     @Override
@@ -417,9 +477,10 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn {
                 pos.x + getSize().x / 2, pos.y + getSize().y / 2 + .5f, pos.z + getSize().z / 2);
     }
 
-    private void executeCommands(final EntityDetectorTrigger trigger, final Entity contextEntity) {
+    private void executeCommands(final Entity contextEntity, final EntityDetectorTrigger... triggersArray) {
+        final List<EntityDetectorTrigger> triggers = List.of(triggersArray);
         for (final EntityDetectorCommand entityDetectorCommand : this.getCommands()) {
-            if (entityDetectorCommand.getTrigger() == trigger) {
+            if (triggers.contains(entityDetectorCommand.getTrigger())) {
                 executeCommand(entityDetectorCommand, contextEntity);
             }
         }

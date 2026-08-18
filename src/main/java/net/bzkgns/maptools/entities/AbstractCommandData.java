@@ -7,24 +7,24 @@ public abstract class AbstractCommandData<T extends Enum<?>> {
 
     public AbstractCommandData(
             String command,
-            T mode
-    ) {
+            T mode) {
         this.command = command;
         this.trigger = mode;
     }
 
-    public String getCommand(){
+    public String getCommand() {
         return command;
     }
-    public T getTrigger(){
+
+    public T getTrigger() {
         return trigger;
     }
 
-    public void setCommand(String cmd){
+    public void setCommand(String cmd) {
         this.command = cmd;
     }
 
-    public void setTrigger(T trigger){
+    public void setTrigger(T trigger) {
         this.trigger = trigger;
     }
 
