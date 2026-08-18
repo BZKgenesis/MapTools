@@ -7,6 +7,7 @@ import net.bzkgns.maptools.data_components.ModDataComponents;
 import net.bzkgns.maptools.entities.ModEntities;
 import net.bzkgns.maptools.entities.entity_detector.EntityDetectorInteractionHandler;
 import net.bzkgns.maptools.entities.redstone_receiver.RedstoneReceiverInteractionHandler;
+import net.bzkgns.maptools.entity_data_serializers.ModEntityDataSerializers;
 import net.bzkgns.maptools.items.ModCreativeTab;
 import net.bzkgns.maptools.items.ModItems;
 import net.bzkgns.maptools.network.C2S.UpdateEntityDetectorPayload;
