@@ -72,7 +72,7 @@ public class EntityDetectorEditScreen extends Screen {
                 .build();
         this.addRenderableWidget(this.enabledCheckbox);
 
-        int listWidth = 410;
+        int listWidth = width-20;
         int listHeight = this.height-90-50;
 
         this.commandList = new CommandList<>(
@@ -90,7 +90,7 @@ public class EntityDetectorEditScreen extends Screen {
         this.addRenderableWidget(commandList);
 
         int SIZE_BOX_Y = 52;
-        int SIZE_BOX_WIDTH = 150;
+        int SIZE_BOX_WIDTH = 220;
         int SIZE_BOX_HEIGHT = 20;
 
         this.sizeInput = new Vector3Input(

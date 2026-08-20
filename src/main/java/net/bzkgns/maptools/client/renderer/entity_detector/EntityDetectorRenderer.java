@@ -15,6 +15,8 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.block.Blocks;
@@ -67,32 +69,36 @@ public class EntityDetectorRenderer extends EntityRenderer<EntityDetector> {
             blockState = Blocks.RED_STAINED_GLASS.defaultBlockState();
         }
 
+        EntityDimensions dimensions = entity.getDimensions(Pose.STANDING);
+
+        float x = dimensions.width()/2f;
+        float y = dimensions.height();
 
         {VertexConsumer vertexconsumer = buffer.getBuffer(RenderType.debugLineStrip(1.0));
-        vertexconsumer.addVertex(matrix4f, .5f, 0f, .5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);
-        vertexconsumer.addVertex(matrix4f, -.5f, 0f, .5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);
-        vertexconsumer.addVertex(matrix4f, -.5f, 0f, -.5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);
-        vertexconsumer.addVertex(matrix4f, .5f, 0f, -.5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);
-        vertexconsumer.addVertex(matrix4f, .5f, 0f, .5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        vertexconsumer.addVertex(matrix4f, x, 0f, x).setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        vertexconsumer.addVertex(matrix4f, -x, 0f, x).setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        vertexconsumer.addVertex(matrix4f, -x, 0f, -x).setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        vertexconsumer.addVertex(matrix4f, x, 0f, -x).setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        vertexconsumer.addVertex(matrix4f, x, 0f, x).setColor(1.0F, 1.0F, 1.0F, 1.0F);
 
-        vertexconsumer.addVertex(matrix4f, .5f, 1f, .5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);
-        vertexconsumer.addVertex(matrix4f, -.5f, 1f, .5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);
-        vertexconsumer.addVertex(matrix4f, -.5f, 1f, -.5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);
-        vertexconsumer.addVertex(matrix4f, .5f, 1f, -.5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);
-        vertexconsumer.addVertex(matrix4f, .5f, 1f, .5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);}
+        vertexconsumer.addVertex(matrix4f, x, y, x).setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        vertexconsumer.addVertex(matrix4f, -x, y, x).setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        vertexconsumer.addVertex(matrix4f, -x, y, -x).setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        vertexconsumer.addVertex(matrix4f, x, y, -x).setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        vertexconsumer.addVertex(matrix4f, x, y, x).setColor(1.0F, 1.0F, 1.0F, 1.0F);}
 
         {VertexConsumer vertexconsumer = buffer.getBuffer(RenderType.debugLineStrip(1.0));
-        vertexconsumer.addVertex(matrix4f, .5f, 0f, .5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);
-        vertexconsumer.addVertex(matrix4f, .5f, 1f, .5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);}
+        vertexconsumer.addVertex(matrix4f, x, 0f, x).setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        vertexconsumer.addVertex(matrix4f, x, y, x).setColor(1.0F, 1.0F, 1.0F, 1.0F);}
         {VertexConsumer vertexconsumer = buffer.getBuffer(RenderType.debugLineStrip(1.0));
-        vertexconsumer.addVertex(matrix4f, -.5f, 0f, .5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);
-        vertexconsumer.addVertex(matrix4f, -.5f, 1f, .5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);}
+        vertexconsumer.addVertex(matrix4f, -x, 0f, x).setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        vertexconsumer.addVertex(matrix4f, -x, y, x).setColor(1.0F, 1.0F, 1.0F, 1.0F);}
         {VertexConsumer vertexconsumer = buffer.getBuffer(RenderType.debugLineStrip(1.0));
-        vertexconsumer.addVertex(matrix4f, .5f, 0f, -.5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);
-        vertexconsumer.addVertex(matrix4f, .5f, 1f, -.5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);}
+        vertexconsumer.addVertex(matrix4f, x, 0f, -x).setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        vertexconsumer.addVertex(matrix4f, x, y, -x).setColor(1.0F, 1.0F, 1.0F, 1.0F);}
         {VertexConsumer vertexconsumer = buffer.getBuffer(RenderType.debugLineStrip(1.0));
-        vertexconsumer.addVertex(matrix4f, -.5f, 0f, -.5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);
-        vertexconsumer.addVertex(matrix4f, -.5f, 1f, -.5f).setColor(1.0F, 1.0F, 1.0F, 1.0F);}
+        vertexconsumer.addVertex(matrix4f, -x, 0f, -x).setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        vertexconsumer.addVertex(matrix4f, -x, y, -x).setColor(1.0F, 1.0F, 1.0F, 1.0F);}
 
         poseStack.pushPose();
 
@@ -110,9 +116,9 @@ public class EntityDetectorRenderer extends EntityRenderer<EntityDetector> {
 
 
         Vector3f size = entity.getSize();
-        poseStack.translate(-size.x/2f, -size.y/2f + 0.5f, -size.z/2f);
+        poseStack.translate(-size.x/2f, 0, -size.z/2f);
 
-        poseStack.scale(size.x, size.y, size.z);
+        poseStack.scale(size.x,size.y, size.z);
 
         blockRendererRedstone.renderSingleBlock(
                 blockState,

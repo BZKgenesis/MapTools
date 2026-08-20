@@ -78,7 +78,7 @@ public class RedstoneReceiver extends Entity {
                 this.setPowered(true);
                 executeCommands(RedstoneReceiverTrigger.ON_SIGNAL);
             }
-            executeCommands(RedstoneReceiverTrigger.PULSE);
+            executeCommands(RedstoneReceiverTrigger.TICK);
         } else {
             if (this.isPowered()) {
                 this.setPowered(false);
@@ -168,7 +168,7 @@ public class RedstoneReceiver extends Entity {
                         this.isEnabled(),
                         List.copyOf(this.getCommands()),
                         this.hasCustomName()
-                                ? this.getCustomName().getString()
+                                ? this.getDisplayName().getString()
                                 : "Redstone Receiver",
                         this.isXrayVisible()));
 
@@ -194,7 +194,7 @@ public class RedstoneReceiver extends Entity {
 
     @Override
     public boolean isCustomNameVisible() {
-        return true;
+        return false;
     }
 
     @Override

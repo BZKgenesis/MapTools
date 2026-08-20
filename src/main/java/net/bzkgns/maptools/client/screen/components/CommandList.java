@@ -56,7 +56,7 @@ public class CommandList<
 
     @Override
     public int getRowWidth() {
-        return 350;
+        return width-20;
     }
 
     public void loadCommands(List<C> commands) {
@@ -99,6 +99,45 @@ public class CommandList<
 
     public void removeCommand(CommandEntry entry) {
         removeEntry(entry);
+    }
+
+    public void moveUpCommand(CommandEntry entry) {
+        List<CommandEntry> entries = new ArrayList<>(this.children());
+        if (!entries.contains(entry)) return;
+        int index = 0;
+        for (CommandEntry curentEntry: entries){
+            if (curentEntry.equals(entry)){
+                if (index == 0) return;
+                CommandEntry A = entries.get(index);
+                CommandEntry B = entries.get(index-1);
+                entries.set(index, B);
+                entries.set(index-1, A);
+                replaceEntries(entries);
+                return;
+            }
+            index++;
+        }
+    }
+    public void moveDownCommand(CommandEntry entry) {
+        List<CommandEntry> entries = new ArrayList<>(this.children());
+        System.out.println("test");
+        if (!entries.contains(entry)){
+            System.out.println("not in list");
+            return;
+        }
+        int index = 0;
+        for (CommandEntry curentEntry: entries){
+            if (curentEntry.equals(entry)){
+                if (index == entries.size()-1) return;
+                CommandEntry A = entries.get(index);
+                CommandEntry B = entries.get(index+1);
+                entries.set(index, B);
+                entries.set(index+1, A);
+                replaceEntries(entries);
+                return;
+            }
+            index++;
+        }
     }
 
     public List<C> getCommands() {
@@ -219,6 +258,8 @@ public class CommandList<
         private final CycleButton<T> trigger;
         private final EditBox command;
         private final Button remove;
+        private final Button moveUp;
+        private final Button moveDown;
 
         private final CommandSuggestions suggestions;
 
@@ -272,6 +313,26 @@ public class CommandList<
                     0,
                     20,
                     20
+            ).build();
+
+            this.moveUp = Button.builder(
+                    Component.literal("↑"),
+                    button -> parent.moveUpCommand(this)
+            ).bounds(
+                    0,
+                    0,
+                    20,
+                    10
+            ).build();
+
+            this.moveDown = Button.builder(
+                    Component.literal("↓"),
+                    button -> parent.moveDownCommand(this)
+            ).bounds(
+                    0,
+                    0,
+                    20,
+                    10
             ).build();
 
             this.suggestions = new CommandSuggestions(
@@ -337,11 +398,13 @@ public class CommandList<
             int triggerWidth = 100;
             int removeWidth = 20;
             int spacing = 5;
+            int moveButtonsWidth = 20;
 
             int commandWidth =
                     width
                             - triggerWidth
                             - removeWidth
+                            - moveButtonsWidth
                             - spacing * 2;
 
             trigger.setX(left);
@@ -360,8 +423,26 @@ public class CommandList<
                             + spacing
                             + commandWidth
                             + spacing
+                            + moveButtonsWidth
             );
             remove.setY(top);
+
+            moveUp.setX(
+                    left
+                            + triggerWidth
+                            + spacing
+                            + commandWidth
+                            + spacing
+            );
+            moveUp.setY(top);
+            moveDown.setX(
+                    left
+                            + triggerWidth
+                            + spacing
+                            + commandWidth
+                            + spacing
+            );
+            moveDown.setY(top+10);
 
             trigger.render(
                     guiGraphics,
@@ -378,6 +459,19 @@ public class CommandList<
             );
 
             remove.render(
+                    guiGraphics,
+                    mouseX,
+                    mouseY,
+                    partialTick
+            );
+
+            moveUp.render(
+                    guiGraphics,
+                    mouseX,
+                    mouseY,
+                    partialTick
+            );
+            moveDown.render(
                     guiGraphics,
                     mouseX,
                     mouseY,
@@ -409,6 +503,18 @@ public class CommandList<
             if (remove.mouseClicked(mouseX, mouseY, button)) {
                 parent.setFocusedEntry(this);
                 setFocusedChild(remove);
+                return true;
+            }
+
+            if (moveUp.mouseClicked(mouseX, mouseY, button)) {
+                parent.setFocusedEntry(this);
+                setFocusedChild(moveUp);
+                return true;
+            }
+
+            if (moveDown.mouseClicked(mouseX, mouseY, button)) {
+                parent.setFocusedEntry(this);
+                setFocusedChild(moveDown);
                 return true;
             }
 

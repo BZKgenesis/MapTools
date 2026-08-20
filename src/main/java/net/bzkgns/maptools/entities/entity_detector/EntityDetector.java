@@ -9,6 +9,9 @@ import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.world.entity.*;
+import net.minecraft.world.scores.Objective;
+import net.minecraft.world.scores.ScoreHolder;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 
@@ -35,9 +38,6 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.PushReaction;
@@ -74,11 +74,22 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn, R
     private Set<UUID> previouslyInZone = new HashSet<>();
     private final Set<UUID> alreadyEnteredZone = new HashSet<>();
     private final Set<UUID> alreadyLeavedZone = new HashSet<>();
+    private final Objective objective;
 
     public EntityDetector(final EntityType<EntityDetector> entityType, final Level level) {
         super(entityType, level);
         this.setNoGravity(true);
         this.noPhysics = true;
+        if (!level.isClientSide()){
+            var server = getServer();
+            if (server != null) {
+               this.objective = server.getScoreboard().getObjective("map_tools");
+            } else{
+                this.objective = null;
+            }
+        } else{
+            this.objective = null;
+        }
     }
 
     public void setConfigNoPos(final EntityDetectorConfig config) {
@@ -125,6 +136,12 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn, R
         this.entityData.set(SIZE_X, x);
         this.entityData.set(SIZE_Y, y);
         this.entityData.set(SIZE_Z, z);
+        this.refreshDimensions();
+    }
+
+    @Override
+    public @NotNull EntityDimensions getDimensions(@NotNull Pose pose){
+        return EntityDimensions.scalable(Math.min(this.getSize().x,this.getSize().z), this.getSize().y);
     }
 
     public boolean isEnabled() {
@@ -154,12 +171,12 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn, R
     @Override
     public void tick() {
         this.baseTick();
+        if (this.level().isClientSide())
+            return;
 
         if (!isEnabled())
             return;
 
-        if (this.level().isClientSide())
-            return;
 
         final AABB detectionBox = computeDetectionBox();
         final var currentEntities = this.level().getEntitiesOfClass(
@@ -170,6 +187,9 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn, R
         final Set<UUID> currentIds = new HashSet<>();
         for (final Entity entity : currentEntities) {
             currentIds.add(entity.getUUID());
+        }
+        if (objective != null) {
+            objective.getScoreboard().getOrCreatePlayerScore(ScoreHolder.forNameOnly(this.tagCount()), objective);
         }
 
         final ServerLevel serverLevel = (ServerLevel) this.level();
@@ -301,7 +321,7 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn, R
                         this.isEnabled(),
                         List.copyOf(this.getCommands()),
                         this.hasCustomName()
-                                ? this.getCustomName().getString()
+                                ? this.getDisplayName().getString()
                                 : "Entity Detector",
                         this.getZoneId(),
                         this.getSize().x,
@@ -335,7 +355,7 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn, R
 
     @Override
     public boolean isCustomNameVisible() {
-        return true;
+        return false;
     }
 
     @Override
@@ -470,11 +490,15 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn, R
         return "zone_" + getZoneId() + "_last";
     }
 
+    private String tagCount() {
+        return "zone_" + getZoneId() + "_count";
+    }
+
     private AABB computeDetectionBox() {
         final Vec3 pos = this.position();
         return new AABB(
-                pos.x - getSize().x / 2, pos.y - getSize().y / 2 + .5f, pos.z - getSize().z / 2,
-                pos.x + getSize().x / 2, pos.y + getSize().y / 2 + .5f, pos.z + getSize().z / 2);
+                pos.x - getSize().x / 2, pos.y - getSize().y / 2 + getSize().y/2f, pos.z - getSize().z / 2,
+                pos.x + getSize().x / 2, pos.y + getSize().y / 2 + getSize().y/2f, pos.z + getSize().z / 2);
     }
 
     private void executeCommands(final Entity contextEntity, final EntityDetectorTrigger... triggersArray) {

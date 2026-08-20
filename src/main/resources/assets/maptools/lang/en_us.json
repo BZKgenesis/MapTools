@@ -1,7 +1,7 @@
 {
   "itemGroup.maptools": "Map Tools Tab",
   "item.maptools.redstone_receiver_editor": "Redstone Receiver Editor",
-  "item.maptools.entity_detector_editor": "Redstone Receiver Editor",
+  "item.maptools.entity_detector_editor": "Entity Detector Editor",
   "entity.maptools.redstone_receiver": "Redstone Receiver",
   "entity.maptools.entity_detector": "Entity Detector",
 
