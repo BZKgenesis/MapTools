@@ -49,8 +49,7 @@ public class EntityDetectorEditScreen extends Screen {
                 30,
                 100,
                 20,
-                Component.literal("Display Name")
-        );
+                Component.literal("Display Name"));
         this.displayNameBox.setValue(detector.getDisplayName().getString());
         this.addRenderableWidget(this.displayNameBox);
 
@@ -60,32 +59,31 @@ public class EntityDetectorEditScreen extends Screen {
                 30,
                 100,
                 20,
-                Component.literal("Zone Id")
-        );
+                Component.literal("Zone Id"));
         this.zoneIdBox.setValue(detector.getZoneId());
         this.addRenderableWidget(this.zoneIdBox);
 
         this.enabledCheckbox = Checkbox.builder(Component.literal("Enabled"), this.font)
-                .pos(centerX + 130,31)
+                .pos(centerX + 130, 31)
                 .selected(detector.isEnabled())
-                .onValueChange((checkbox,selected)  -> detector.setEnabled(selected))
+                .onValueChange((checkbox, selected) -> detector.setEnabled(selected))
                 .build();
         this.addRenderableWidget(this.enabledCheckbox);
 
-        int listWidth = width-20;
-        int listHeight = this.height-90-50;
+        int listWidth = width - 20;
+        int listHeight = this.height - 90 - 50;
 
         this.commandList = new CommandList<>(
                 this,
                 this.minecraft,
+                this.font,
                 centerX - listWidth / 2,
                 100,
                 listWidth,
                 listHeight,
                 EntityDetectorTrigger.class,
                 EntityDetectorTrigger.ON_ENTER,
-                EntityDetectorCommand::new
-        );
+                EntityDetectorCommand::new);
         commandList.loadCommands(detector.getCommands());
         this.addRenderableWidget(commandList);
 
@@ -95,55 +93,47 @@ public class EntityDetectorEditScreen extends Screen {
 
         this.sizeInput = new Vector3Input(
                 this.font,
-                centerX-60, SIZE_BOX_Y,
+                centerX - 60, SIZE_BOX_Y,
                 SIZE_BOX_WIDTH, SIZE_BOX_HEIGHT,
                 "Size",
                 Component.literal("Size"),
                 detector.getSize(),
-                s->detector.setSize(s.x,s.y,s.z)
-        );
+                s -> detector.setSize(s.x, s.y, s.z));
         this.addRenderableWidget(this.sizeInput);
 
         this.posInput = new Vector3Input(
                 this.font,
-                centerX-60, SIZE_BOX_Y+SIZE_BOX_HEIGHT+2,
+                centerX - 60, SIZE_BOX_Y + SIZE_BOX_HEIGHT + 2,
                 SIZE_BOX_WIDTH, SIZE_BOX_HEIGHT,
                 "Pos",
                 Component.literal("Pos"),
                 detector.getPosition(0).toVector3f(),
-                s->detector.setPos(s.x,s.y,s.z)
-        );
+                s -> detector.setPos(s.x, s.y, s.z));
         this.addRenderableWidget(this.posInput);
-
 
         this.addRenderableWidget(
                 Button.builder(Component.literal("+ Add a command"),
-                                button ->commandList.addCommand())
+                        button -> commandList.addCommand())
                         .bounds(
-                                centerX -220, 75,
-                                130, 20
-                        ).build()
-        );
+                                centerX - 220, 75,
+                                130, 20)
+                        .build());
 
         this.addRenderableWidget(
                 Button.builder(
                         Component.literal("Validate"),
                         button -> save())
-                    .bounds(
-                        centerX - 100, this.height-40,
-                        200, 20
-                    ).build()
-        );
+                        .bounds(
+                                centerX - 100, this.height - 40,
+                                200, 20)
+                        .build());
 
         this.addRenderableWidget(
                 new OrientationWidget(
                         this.minecraft,
                         0, 0,
-                        50,50
-                )
-        );
+                        50, 50));
     }
-
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -176,26 +166,22 @@ public class EntityDetectorEditScreen extends Screen {
 
     private void save() {
 
-        EntityDetectorConfig config =
-                new EntityDetectorConfig(
-                        enabledCheckbox.selected(),
-                        commandList.getCommands(),
-                        displayNameBox.getValue(),
-                        zoneIdBox.getValue(),
-                        sizeInput.getValue().x,
-                        sizeInput.getValue().y,
-                        sizeInput.getValue().z,
-                        posInput.getValue().x,
-                        posInput.getValue().y,
-                        posInput.getValue().z
-                );
+        EntityDetectorConfig config = new EntityDetectorConfig(
+                enabledCheckbox.selected(),
+                commandList.getCommands(),
+                displayNameBox.getValue(),
+                zoneIdBox.getValue(),
+                sizeInput.getValue().x,
+                sizeInput.getValue().y,
+                sizeInput.getValue().z,
+                posInput.getValue().x,
+                posInput.getValue().y,
+                posInput.getValue().z);
 
         PacketDistributor.sendToServer(
-            new UpdateEntityDetectorPayload(
-                detector.getId(),
-                config
-            )
-        );
+                new UpdateEntityDetectorPayload(
+                        detector.getId(),
+                        config));
 
         Minecraft.getInstance().setScreen(null);
     }
@@ -205,40 +191,33 @@ public class EntityDetectorEditScreen extends Screen {
             @NotNull GuiGraphics guiGraphics,
             int mouseX,
             int mouseY,
-            float partialTick
-    ) {
+            float partialTick) {
         super.render(
                 guiGraphics,
                 mouseX,
                 mouseY,
-                partialTick
-        );
+                partialTick);
 
         guiGraphics.drawCenteredString(
                 this.font,
                 this.title,
                 this.width / 2,
                 20,
-                0xFFFFFF
-        );
+                0xFFFFFF);
 
         guiGraphics.drawString(
                 this.font,
                 "Display Name:",
-                this.width / 2 - 125 - this.font.width("Display Name:")-3,
+                this.width / 2 - 125 - this.font.width("Display Name:") - 3,
                 35,
-                0xFFFFFF
-        );
+                0xFFFFFF);
 
         guiGraphics.drawString(
                 this.font,
                 "Zone Id:",
-                this.width / 2 + 25 - this.font.width("Zone Id:")-3,
+                this.width / 2 + 25 - this.font.width("Zone Id:") - 3,
                 35,
-                0xFFFFFF
-        );
-
-
+                0xFFFFFF);
 
     }
 }

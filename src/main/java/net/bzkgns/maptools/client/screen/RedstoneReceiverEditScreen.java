@@ -45,39 +45,35 @@ public class RedstoneReceiverEditScreen extends Screen {
                 30,
                 200,
                 20,
-                Component.literal("Display Name")
-        );
+                Component.literal("Display Name"));
         this.displayNameBox.setValue(receiver.getDisplayName().getString());
         this.addRenderableWidget(displayNameBox);
 
         this.enabledCheckbox = Checkbox.builder(Component.literal("Enabled"), this.font)
                 .pos(centerX + 105,
-                    31)
+                        31)
                 .selected(receiver.isEnabled())
-                .onValueChange((checkbox, selected) ->
-                                receiver.setEnabled(selected))
+                .onValueChange((checkbox, selected) -> receiver.setEnabled(selected))
                 .build();
         this.addRenderableWidget(enabledCheckbox);
 
         this.xrayVisibleCheckbox = Checkbox.builder(
-                        Component.literal("Xray visibility"),
-                        this.font
-                )
+                Component.literal("Xray visibility"),
+                this.font)
                 .pos(centerX + 105,
-                    55)
+                        55)
                 .selected(receiver.isXrayVisible())
-                .onValueChange((checkbox, selected) ->
-                                receiver.setXrayVisible(selected))
+                .onValueChange((checkbox, selected) -> receiver.setXrayVisible(selected))
                 .build();
         this.addRenderableWidget(xrayVisibleCheckbox);
 
-
         int listWidth = 410;
-        int listHeight = this.height-90-50;
+        int listHeight = this.height - 90 - 50;
 
         this.commandList = new CommandList<>(
                 this,
                 this.minecraft,
+                this.font,
                 centerX - listWidth / 2,
                 100,
                 listWidth,
@@ -90,56 +86,47 @@ public class RedstoneReceiverEditScreen extends Screen {
         commandList.loadCommands(receiver.getCommands());
         this.addRenderableWidget(commandList);
 
-
         this.addRenderableWidget(
                 Button.builder(Component.literal("+ Add a command"),
-                                button ->commandList.addCommand())
+                        button -> commandList.addCommand())
                         .bounds(
-                            centerX -220,
-                            75,
-                            130,
-                            20
-                        ).build()
-        );
+                                centerX - 220,
+                                75,
+                                130,
+                                20)
+                        .build());
 
         this.addRenderableWidget(
                 Button.builder(
                         Component.literal("Validate"),
                         button -> save())
-                    .bounds(
-                        centerX - 100,
-                        this.height-40,
-                        200,
-                        20
-                    ).build()
-        );
+                        .bounds(
+                                centerX - 100,
+                                this.height - 40,
+                                200,
+                                20)
+                        .build());
 
         this.addRenderableWidget(
                 new OrientationWidget(
                         this.minecraft,
                         0,
                         0,
-                        50,50
-                )
-        );
+                        50, 50));
     }
 
     private void save() {
 
-        RedstoneReceiverConfig config =
-            new RedstoneReceiverConfig(
+        RedstoneReceiverConfig config = new RedstoneReceiverConfig(
                 enabledCheckbox.selected(),
                 commandList.getCommands(),
                 displayNameBox.getValue(),
-                xrayVisibleCheckbox.selected()
-            );
+                xrayVisibleCheckbox.selected());
 
         PacketDistributor.sendToServer(
-            new UpdateRedstoneReceiverPayload(
-                receiver.getId(),
-                config
-            )
-        );
+                new UpdateRedstoneReceiverPayload(
+                        receiver.getId(),
+                        config));
 
         Minecraft.getInstance().setScreen(null);
     }
@@ -167,32 +154,30 @@ public class RedstoneReceiverEditScreen extends Screen {
             @NotNull GuiGraphics guiGraphics,
             int mouseX,
             int mouseY,
-            float partialTick
-    ) {
+            float partialTick) {
         super.render(
                 guiGraphics,
                 mouseX,
                 mouseY,
-                partialTick
-        );
+                partialTick);
 
         guiGraphics.drawCenteredString(
                 this.font,
                 this.title,
                 this.width / 2,
                 20,
-                0xFFFFFF
-        );
+                0xFFFFFF);
 
         guiGraphics.drawString(
                 this.font,
                 "Display Name:",
-                this.width / 2 - 100 - this.font.width("Display Name:")-3,
+                this.width / 2 - 100 - this.font.width("Display Name:") - 3,
                 35,
-                0xFFFFFF
-        );
+                0xFFFFFF);
     }
 
     @Override
-    public boolean isPauseScreen() {return false;}
+    public boolean isPauseScreen() {
+        return false;
+    }
 }

@@ -2,6 +2,7 @@ package net.bzkgns.maptools.client.screen.components;
 
 import net.bzkgns.maptools.entities.AbstractCommandData;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -15,10 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
-public class CommandList<
-        C extends AbstractCommandData<T>,
-        T extends Enum<T>>
-        extends AbstractSelectionList<CommandList<C,T>.CommandEntry> {
+public class CommandList<C extends AbstractCommandData<T>, T extends Enum<T>>
+        extends AbstractSelectionList<CommandList<C, T>.CommandEntry> {
 
     private final Screen screen;
 
@@ -27,24 +26,27 @@ public class CommandList<
 
     private final T[] triggerValues;
 
+    private final Font font;
+
     public CommandList(
             Screen screen,
             Minecraft minecraft,
+            Font font,
             int x,
             int y,
             int width,
             int height,
             Class<T> triggerClass,
             T defaultTrigger,
-            BiFunction<String, T, C> commandFactory
-    ) {
+            BiFunction<String, T, C> commandFactory) {
         super(
                 minecraft,
                 width,
                 height,
                 y,
-                28
-        );
+                28);
+
+        this.font = font;
 
         this.screen = screen;
         this.commandFactory = commandFactory;
@@ -56,7 +58,7 @@ public class CommandList<
 
     @Override
     public int getRowWidth() {
-        return width-20;
+        return width - 20;
     }
 
     public void loadCommands(List<C> commands) {
@@ -71,10 +73,8 @@ public class CommandList<
                             getRowWidth(),
                             commandFactory.apply(
                                     command.getCommand(),
-                                    command.getTrigger()
-                            )
-                    )
-            );
+                                    command.getTrigger()),
+                            this.font));
         }
     }
 
@@ -87,10 +87,8 @@ public class CommandList<
                         getRowWidth(),
                         commandFactory.apply(
                                 "",
-                                defaultTrigger
-                        )
-                )
-        );
+                                defaultTrigger),
+                        this.font));
 
         if (!children().isEmpty()) {
             setSelected(children().getLast());
@@ -103,36 +101,40 @@ public class CommandList<
 
     public void moveUpCommand(CommandEntry entry) {
         List<CommandEntry> entries = new ArrayList<>(this.children());
-        if (!entries.contains(entry)) return;
+        if (!entries.contains(entry))
+            return;
         int index = 0;
-        for (CommandEntry curentEntry: entries){
-            if (curentEntry.equals(entry)){
-                if (index == 0) return;
+        for (CommandEntry curentEntry : entries) {
+            if (curentEntry.equals(entry)) {
+                if (index == 0)
+                    return;
                 CommandEntry A = entries.get(index);
-                CommandEntry B = entries.get(index-1);
+                CommandEntry B = entries.get(index - 1);
                 entries.set(index, B);
-                entries.set(index-1, A);
+                entries.set(index - 1, A);
                 replaceEntries(entries);
                 return;
             }
             index++;
         }
     }
+
     public void moveDownCommand(CommandEntry entry) {
         List<CommandEntry> entries = new ArrayList<>(this.children());
         System.out.println("test");
-        if (!entries.contains(entry)){
+        if (!entries.contains(entry)) {
             System.out.println("not in list");
             return;
         }
         int index = 0;
-        for (CommandEntry curentEntry: entries){
-            if (curentEntry.equals(entry)){
-                if (index == entries.size()-1) return;
+        for (CommandEntry curentEntry : entries) {
+            if (curentEntry.equals(entry)) {
+                if (index == entries.size() - 1)
+                    return;
                 CommandEntry A = entries.get(index);
-                CommandEntry B = entries.get(index+1);
+                CommandEntry B = entries.get(index + 1);
                 entries.set(index, B);
-                entries.set(index+1, A);
+                entries.set(index + 1, A);
                 replaceEntries(entries);
                 return;
             }
@@ -180,8 +182,7 @@ public class CommandList<
             int left,
             int top,
             int width,
-            int height
-    ) {
+            int height) {
         CommandEntry entry = getEntry(index);
 
         entry.setPosition(left, top);
@@ -196,42 +197,36 @@ public class CommandList<
                 mouseX,
                 mouseY,
                 isMouseOver(mouseX, mouseY),
-                partialTick
-        );
+                partialTick);
     }
 
     @Override
     protected void renderListBackground(
-            GuiGraphics guiGraphics
-    ) {
+            GuiGraphics guiGraphics) {
         guiGraphics.fill(
                 getRowLeft(),
                 getY(),
                 getRowRight(),
                 getBottom(),
-                0x80000000
-        );
+                0x80000000);
     }
 
     @Override
     protected void renderDecorations(
             @NotNull GuiGraphics guiGraphics,
             int mouseX,
-            int mouseY
-    ) {
+            int mouseY) {
         super.renderDecorations(
                 guiGraphics,
                 mouseX,
-                mouseY
-        );
+                mouseY);
     }
 
     @Override
     public boolean mouseClicked(
             double mouseX,
             double mouseY,
-            int button
-    ) {
+            int button) {
         boolean result = super.mouseClicked(mouseX, mouseY, button);
 
         if (!result) {
@@ -248,18 +243,19 @@ public class CommandList<
     }
 
     @Override
-    protected void updateWidgetNarration(@NotNull NarrationElementOutput narrationElementOutput) {}
-
+    protected void updateWidgetNarration(@NotNull NarrationElementOutput narrationElementOutput) {
+    }
 
     public class CommandEntry extends AbstractSelectionList.Entry<CommandEntry> {
 
-        private final CommandList<C,T> parent;
+        private final CommandList<C, T> parent;
 
         private final CycleButton<T> trigger;
         private final EditBox command;
         private final Button remove;
         private final Button moveUp;
         private final Button moveDown;
+        private final Checkbox enableCheckbox;
 
         private final CommandSuggestions suggestions;
 
@@ -268,16 +264,16 @@ public class CommandList<
         public CommandEntry(
                 Minecraft minecraft,
                 Screen screen,
-                CommandList<C,T> parent,
+                CommandList<C, T> parent,
                 int width,
-                C command
-        ) {
+                C command,
+                Font font) {
             this.parent = parent;
 
+            this.enableCheckbox = Checkbox.builder(Component.literal("enabled"), font).build();
+
             this.trigger = CycleButton
-                    .builder((T t) ->
-                            Component.literal(t.name())
-                    )
+                    .builder((T t) -> Component.literal(t.name()))
                     .withValues(triggerValues)
                     .withInitialValue(command.getTrigger())
                     .displayOnlyValue()
@@ -287,9 +283,7 @@ public class CommandList<
                             90,
                             20,
                             Component.literal("Trigger"),
-                            (button, value) ->
-                                    command.setTrigger(value)
-                    );
+                            (button, value) -> command.setTrigger(value));
 
             this.command = new EditBox(
                     minecraft.font,
@@ -297,8 +291,7 @@ public class CommandList<
                     0,
                     width - 120,
                     20,
-                    Component.literal("Command")
-            );
+                    Component.literal("Command"));
 
             this.command.setMaxLength(32000);
             this.command.setValue(command.getCommand());
@@ -307,33 +300,30 @@ public class CommandList<
 
             this.remove = Button.builder(
                     Component.literal("X"),
-                    button -> parent.removeCommand(this)
-            ).bounds(
-                    0,
-                    0,
-                    20,
-                    20
-            ).build();
+                    button -> parent.removeCommand(this)).bounds(
+                            0,
+                            0,
+                            20,
+                            20)
+                    .build();
 
             this.moveUp = Button.builder(
                     Component.literal("↑"),
-                    button -> parent.moveUpCommand(this)
-            ).bounds(
-                    0,
-                    0,
-                    20,
-                    10
-            ).build();
+                    button -> parent.moveUpCommand(this)).bounds(
+                            0,
+                            0,
+                            20,
+                            10)
+                    .build();
 
             this.moveDown = Button.builder(
                     Component.literal("↓"),
-                    button -> parent.moveDownCommand(this)
-            ).bounds(
-                    0,
-                    0,
-                    20,
-                    10
-            ).build();
+                    button -> parent.moveDownCommand(this)).bounds(
+                            0,
+                            0,
+                            20,
+                            10)
+                    .build();
 
             this.suggestions = new CommandSuggestions(
                     minecraft,
@@ -345,8 +335,7 @@ public class CommandList<
                     0,
                     7,
                     false,
-                    Integer.MIN_VALUE
-            );
+                    Integer.MIN_VALUE);
 
             this.suggestions.setAllowSuggestions(true);
 
@@ -356,12 +345,10 @@ public class CommandList<
             });
         }
 
-
         public C getCommandData() {
             return commandFactory.apply(
                     command.getValue(),
-                    trigger.getValue()
-            );
+                    trigger.getValue());
         }
 
         @SuppressWarnings("unused")
@@ -393,26 +380,23 @@ public class CommandList<
                 int mouseX,
                 int mouseY,
                 boolean hovering,
-                float partialTick
-        ) {
+                float partialTick) {
             int triggerWidth = 100;
             int removeWidth = 20;
             int spacing = 5;
             int moveButtonsWidth = 20;
 
-            int commandWidth =
-                    width
-                            - triggerWidth
-                            - removeWidth
-                            - moveButtonsWidth
-                            - spacing * 2;
+            int commandWidth = width
+                    - triggerWidth
+                    - removeWidth
+                    - moveButtonsWidth
+                    - spacing * 2;
 
             trigger.setX(left);
             trigger.setY(top);
 
             command.setX(
-                    left + triggerWidth + spacing
-            );
+                    left + triggerWidth + spacing);
             command.setY(top);
 
             command.setWidth(commandWidth);
@@ -423,8 +407,7 @@ public class CommandList<
                             + spacing
                             + commandWidth
                             + spacing
-                            + moveButtonsWidth
-            );
+                            + moveButtonsWidth);
             remove.setY(top);
 
             moveUp.setX(
@@ -432,59 +415,51 @@ public class CommandList<
                             + triggerWidth
                             + spacing
                             + commandWidth
-                            + spacing
-            );
+                            + spacing);
             moveUp.setY(top);
             moveDown.setX(
                     left
                             + triggerWidth
                             + spacing
                             + commandWidth
-                            + spacing
-            );
-            moveDown.setY(top+10);
+                            + spacing);
+            moveDown.setY(top + 10);
 
             trigger.render(
                     guiGraphics,
                     mouseX,
                     mouseY,
-                    partialTick
-            );
+                    partialTick);
 
             command.render(
                     guiGraphics,
                     mouseX,
                     mouseY,
-                    partialTick
-            );
+                    partialTick);
 
             remove.render(
                     guiGraphics,
                     mouseX,
                     mouseY,
-                    partialTick
-            );
+                    partialTick);
 
             moveUp.render(
                     guiGraphics,
                     mouseX,
                     mouseY,
-                    partialTick
-            );
+                    partialTick);
             moveDown.render(
                     guiGraphics,
                     mouseX,
                     mouseY,
-                    partialTick
-            );
+                    partialTick);
         }
 
         @Override
         public boolean mouseClicked(
                 double mouseX,
                 double mouseY,
-                int button
-        ) {
+                int button) {
             if (trigger.mouseClicked(mouseX, mouseY, button)) {
                 parent.setFocusedEntry(this);
                 setFocusedChild(trigger);
@@ -525,8 +500,7 @@ public class CommandList<
         public boolean mouseReleased(
                 double mouseX,
                 double mouseY,
-                int button
-        ) {
+                int button) {
             return trigger.mouseReleased(mouseX, mouseY, button)
                     || command.mouseReleased(mouseX, mouseY, button)
                     || remove.mouseReleased(mouseX, mouseY, button);
@@ -538,37 +512,32 @@ public class CommandList<
                 double mouseY,
                 int button,
                 double dragX,
-                double dragY
-        ) {
+                double dragY) {
             return command.mouseDragged(
                     mouseX,
                     mouseY,
                     button,
                     dragX,
-                    dragY
-            );
+                    dragY);
         }
 
         @Override
         public boolean keyPressed(
                 int keyCode,
                 int scanCode,
-                int modifiers
-        ) {
+                int modifiers) {
             if (command.isFocused()) {
                 if (suggestions.keyPressed(
                         keyCode,
                         scanCode,
-                        modifiers
-                )) {
+                        modifiers)) {
                     return true;
                 }
 
                 if (command.keyPressed(
                         keyCode,
                         scanCode,
-                        modifiers
-                )) {
+                        modifiers)) {
                     return true;
                 }
             }
@@ -577,8 +546,7 @@ public class CommandList<
                 return trigger.keyPressed(
                         keyCode,
                         scanCode,
-                        modifiers
-                );
+                        modifiers);
             }
 
             return super.keyPressed(keyCode, scanCode, modifiers);
@@ -592,7 +560,6 @@ public class CommandList<
 
             return false;
         }
-
 
         @Override
         public void setFocused(boolean focused) {
