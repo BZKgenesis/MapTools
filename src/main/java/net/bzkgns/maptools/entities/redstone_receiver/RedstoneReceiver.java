@@ -7,6 +7,8 @@ import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import com.sun.nio.sctp.IllegalReceiveException;
+
 import net.bzkgns.maptools.Config;
 import net.bzkgns.maptools.data_components.ModDataComponents;
 import net.bzkgns.maptools.entity_data_serializers.ModEntityDataSerializers;
@@ -235,6 +237,12 @@ public class RedstoneReceiver extends Entity {
             final CompoundTag commandTag = commandsTag.getCompound(i);
 
             final String command = commandTag.getString("Command");
+            boolean enabled;
+            try {
+                enabled = commandTag.getBoolean("Enabled");
+            } catch (final IllegalArgumentException e) {
+                enabled = true;
+            }
 
             RedstoneReceiverTrigger trigger;
 
@@ -246,7 +254,7 @@ public class RedstoneReceiver extends Entity {
             }
 
             commands.add(
-                    new RedstoneReceiverCommand(command, trigger));
+                    new RedstoneReceiverCommand(command, trigger, enabled));
         }
         this.setCommands(commands);
 
@@ -270,6 +278,10 @@ public class RedstoneReceiver extends Entity {
             commandTag.putString(
                     "Trigger",
                     receiverCommand.getTrigger().name());
+
+            commandTag.putBoolean(
+                    "Enabled",
+                    receiverCommand.isEnabled());
 
             commandsTag.add(commandTag);
         }
@@ -298,7 +310,8 @@ public class RedstoneReceiver extends Entity {
     private void executeCommands(final RedstoneReceiverTrigger trigger) {
         for (final RedstoneReceiverCommand receiverCommand : getCommands()) {
             if (receiverCommand.getTrigger() == trigger) {
-                executeCommand(receiverCommand);
+                if (receiverCommand.isEnabled())
+                    executeCommand(receiverCommand);
             }
         }
     }

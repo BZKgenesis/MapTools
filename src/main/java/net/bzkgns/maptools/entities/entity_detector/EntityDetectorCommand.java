@@ -18,24 +18,30 @@ public class EntityDetectorCommand extends AbstractCommandData<EntityDetectorTri
                                         Enum::ordinal),
                         EntityDetectorCommand::getTrigger,
 
+                        ByteBufCodecs.BOOL,
+                        EntityDetectorCommand::isEnabled,
+
                         EntityDetectorCommand::new);
 
         public static final Codec<EntityDetectorCommand> COMMAND_CODEC = RecordCodecBuilder.create(instance -> instance
                         .group(
                                         Codec.STRING.fieldOf("command").forGetter(EntityDetectorCommand::getCommand),
                                         Codec.INT.fieldOf("trigger").forGetter(
-                                                        (receiverCommand) -> receiverCommand.getTrigger().ordinal()))
+                                                        (receiverCommand) -> receiverCommand.getTrigger().ordinal()),
+                                        Codec.BOOL.fieldOf("enabled").forGetter(EntityDetectorCommand::isEnabled))
                         .apply(instance, EntityDetectorCommand::new));
 
         public EntityDetectorCommand(
                         String command,
-                        EntityDetectorTrigger trigger) {
-                super(command, trigger);
+                        EntityDetectorTrigger trigger,
+                        boolean enabled) {
+                super(command, trigger, enabled);
         }
 
         public EntityDetectorCommand(
                         String command,
-                        int trigger) {
-                super(command, EntityDetectorTrigger.values()[trigger]);
+                        int trigger,
+                        boolean enabled) {
+                super(command, EntityDetectorTrigger.values()[trigger], enabled);
         }
 }

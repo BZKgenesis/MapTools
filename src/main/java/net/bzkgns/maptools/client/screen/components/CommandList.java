@@ -9,6 +9,8 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+
+import org.apache.commons.lang3.function.TriFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +23,7 @@ public class CommandList<C extends AbstractCommandData<T>, T extends Enum<T>>
 
     private final Screen screen;
 
-    private final BiFunction<String, T, C> commandFactory;
+    private final TriFunction<String, T, Boolean, C> commandFactory;
     private final T defaultTrigger;
 
     private final T[] triggerValues;
@@ -38,7 +40,7 @@ public class CommandList<C extends AbstractCommandData<T>, T extends Enum<T>>
             int height,
             Class<T> triggerClass,
             T defaultTrigger,
-            BiFunction<String, T, C> commandFactory) {
+            TriFunction<String, T, Boolean, C> commandFactory) {
         super(
                 minecraft,
                 width,
@@ -73,7 +75,8 @@ public class CommandList<C extends AbstractCommandData<T>, T extends Enum<T>>
                             getRowWidth(),
                             commandFactory.apply(
                                     command.getCommand(),
-                                    command.getTrigger()),
+                                    command.getTrigger(),
+                                    command.isEnabled()),
                             this.font));
         }
     }
@@ -87,7 +90,8 @@ public class CommandList<C extends AbstractCommandData<T>, T extends Enum<T>>
                         getRowWidth(),
                         commandFactory.apply(
                                 "",
-                                defaultTrigger),
+                                defaultTrigger,
+                                true),
                         this.font));
 
         if (!children().isEmpty()) {
@@ -270,7 +274,12 @@ public class CommandList<C extends AbstractCommandData<T>, T extends Enum<T>>
                 Font font) {
             this.parent = parent;
 
-            this.enableCheckbox = Checkbox.builder(Component.literal("enabled"), font).build();
+            this.enableCheckbox = Checkbox
+                    .builder(Component.literal(""), font)
+                    .selected(command.isEnabled())
+                    .onValueChange((box, value) -> command.setEnabled(value))
+                    .pos(0, 0)
+                    .build();
 
             this.trigger = CycleButton
                     .builder((T t) -> Component.literal(t.name()))
@@ -348,7 +357,8 @@ public class CommandList<C extends AbstractCommandData<T>, T extends Enum<T>>
         public C getCommandData() {
             return commandFactory.apply(
                     command.getValue(),
-                    trigger.getValue());
+                    trigger.getValue(),
+                    enableCheckbox.selected());
         }
 
         @SuppressWarnings("unused")
@@ -381,22 +391,27 @@ public class CommandList<C extends AbstractCommandData<T>, T extends Enum<T>>
                 int mouseY,
                 boolean hovering,
                 float partialTick) {
+            int enableCheckBoxWidth = 20;
             int triggerWidth = 100;
             int removeWidth = 20;
             int spacing = 5;
             int moveButtonsWidth = 20;
 
             int commandWidth = width
+                    - enableCheckBoxWidth
                     - triggerWidth
                     - removeWidth
                     - moveButtonsWidth
                     - spacing * 2;
 
-            trigger.setX(left);
+            enableCheckbox.setX(left);
+            enableCheckbox.setY(top);
+
+            trigger.setX(left + enableCheckBoxWidth);
             trigger.setY(top);
 
             command.setX(
-                    left + triggerWidth + spacing);
+                    left + triggerWidth + spacing + enableCheckBoxWidth);
             command.setY(top);
 
             command.setWidth(commandWidth);
@@ -424,6 +439,12 @@ public class CommandList<C extends AbstractCommandData<T>, T extends Enum<T>>
                             + commandWidth
                             + spacing);
             moveDown.setY(top + 10);
+
+            enableCheckbox.render(
+                    guiGraphics,
+                    mouseX,
+                    mouseY,
+                    partialTick);
 
             trigger.render(
                     guiGraphics,
@@ -490,6 +511,12 @@ public class CommandList<C extends AbstractCommandData<T>, T extends Enum<T>>
             if (moveDown.mouseClicked(mouseX, mouseY, button)) {
                 parent.setFocusedEntry(this);
                 setFocusedChild(moveDown);
+                return true;
+            }
+
+            if (enableCheckbox.mouseClicked(mouseX, mouseY, button)) {
+                parent.setFocusedEntry(this);
+                setFocusedChild(enableCheckbox);
                 return true;
             }
 

@@ -80,14 +80,14 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn, R
         super(entityType, level);
         this.setNoGravity(true);
         this.noPhysics = true;
-        if (!level.isClientSide()){
+        if (!level.isClientSide()) {
             var server = getServer();
             if (server != null) {
-               this.objective = server.getScoreboard().getObjective("map_tools");
-            } else{
+                this.objective = server.getScoreboard().getObjective("map_tools");
+            } else {
                 this.objective = null;
             }
-        } else{
+        } else {
             this.objective = null;
         }
     }
@@ -140,8 +140,8 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn, R
     }
 
     @Override
-    public @NotNull EntityDimensions getDimensions(@NotNull Pose pose){
-        return EntityDimensions.scalable(Math.min(this.getSize().x,this.getSize().z), this.getSize().y);
+    public @NotNull EntityDimensions getDimensions(@NotNull Pose pose) {
+        return EntityDimensions.scalable(Math.min(this.getSize().x, this.getSize().z), this.getSize().y);
     }
 
     public boolean isEnabled() {
@@ -176,7 +176,6 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn, R
 
         if (!isEnabled())
             return;
-
 
         final AABB detectionBox = computeDetectionBox();
         final var currentEntities = this.level().getEntitiesOfClass(
@@ -425,6 +424,14 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn, R
 
             final String command = commandTag.getString("Command");
 
+            boolean enabled;
+
+            try {
+                enabled = commandTag.getBoolean("Enabled");
+            } catch (final IllegalArgumentException e) {
+                enabled = true;
+            }
+
             EntityDetectorTrigger trigger;
 
             try {
@@ -435,7 +442,7 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn, R
             }
 
             commands.add(
-                    new EntityDetectorCommand(command, trigger));
+                    new EntityDetectorCommand(command, trigger, enabled));
         }
         this.setCommands(commands);
     }
@@ -454,6 +461,8 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn, R
             commandTag.putString(
                     "Trigger",
                     entityDetectorCommand.getTrigger().name());
+
+            commandTag.putBoolean("Enabled", entityDetectorCommand.isEnabled());
 
             commandsTag.add(commandTag);
         }
@@ -497,15 +506,16 @@ public class EntityDetector extends Entity implements IEntityWithComplexSpawn, R
     private AABB computeDetectionBox() {
         final Vec3 pos = this.position();
         return new AABB(
-                pos.x - getSize().x / 2, pos.y - getSize().y / 2 + getSize().y/2f, pos.z - getSize().z / 2,
-                pos.x + getSize().x / 2, pos.y + getSize().y / 2 + getSize().y/2f, pos.z + getSize().z / 2);
+                pos.x - getSize().x / 2, pos.y - getSize().y / 2 + getSize().y / 2f, pos.z - getSize().z / 2,
+                pos.x + getSize().x / 2, pos.y + getSize().y / 2 + getSize().y / 2f, pos.z + getSize().z / 2);
     }
 
     private void executeCommands(final Entity contextEntity, final EntityDetectorTrigger... triggersArray) {
         final List<EntityDetectorTrigger> triggers = List.of(triggersArray);
         for (final EntityDetectorCommand entityDetectorCommand : this.getCommands()) {
             if (triggers.contains(entityDetectorCommand.getTrigger())) {
-                executeCommand(entityDetectorCommand, contextEntity);
+                if (entityDetectorCommand.isEnabled())
+                    executeCommand(entityDetectorCommand, contextEntity);
             }
         }
     }
